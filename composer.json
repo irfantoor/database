@@ -1,0 +1,20 @@
+{
+    "name": "irfantoor/database",
+    "description": "Irfan's Database",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Irfan TOOR",
+            "email": "email@irfantoor.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.0"
+    },
+    "autoload": {
+        "classmap": [
+            "src/"
+        ]
+    }
+}
+

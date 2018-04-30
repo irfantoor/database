@@ -2,6 +2,7 @@
     "name": "irfantoor/database",
     "description": "Irfan's Database",
     "type": "library",
+    "license": "MIT",
     "authors": [
         {
             "name": "Irfan TOOR",

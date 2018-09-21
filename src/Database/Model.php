@@ -7,7 +7,7 @@ use IrfanTOOR\Database\SQLite;
 
 /*
     !!! NOTE: Currently Model only supports SQLite db
-    
+
     e.g.
     class Users extends IrfanTOOR\Database\Model
     {
@@ -94,12 +94,15 @@ class Model
      */
     function getSchema()
     {
+        # Database structure
         $schema = 'CREATE TABLE IF NOT EXISTS ' . $this->table . ' (';
         $sep = PHP_EOL;
+
         foreach($this->schema as $fld) {
             $schema .= $sep . $fld;
             $sep = ', ' . PHP_EOL;
         }
+
         $schema .= PHP_EOL . ');' . PHP_EOL;
 
         # Indecies
@@ -121,22 +124,28 @@ class Model
                     ' ON ' . $this->table . '(' . $field . ');' . PHP_EOL;
             }
         }
+
         return $schema;
     }
 
     /*
      * Try to create the schema in the connected db
      *
+     * @param $type
      */
     public function create()
     {
         try {
             $schema = explode(';', str_replace(PHP_EOL, '', $this->getSchema()));
             array_pop($schema);
+
+            # db structure
+            $sql = array_shift($schema);
+            $this->db->query($sql . ';');
+
+            # indecies
             foreach($schema as $sql) {
-                $sql .= ';';
-                # echo $sql . PHP_EOL;
-                $this->db->query($sql);
+                $this->db->query($sql . ';');
             }
         } catch(Exception $e) {
             throw new Exception($e->getMessage(), 1);
@@ -164,7 +173,7 @@ class Model
      * @param array $q    different elements of sql
      * @param array $data elements used for binding
      *
-     * @return array array of resulting records in which each record is an 
+     * @return array array of resulting records in which each record is an
      *               associated array, or an emty array.
      */
     public function get($q = [], $data = [], $pagination = null)
@@ -205,7 +214,7 @@ class Model
      *
      * @param array $data an assoicated array representing a record to be
      *                    inserted or updated. If no record is present with the
-     *                    given details, a record is inserted or an existing is 
+     *                    given details, a record is inserted or an existing is
      *                    updated
      */
     public function insertOrUpdate($data)
@@ -244,8 +253,8 @@ class Model
      *
      * @param string $sql  sql statement
      * @param array  $data array with associated elements for binding
-     * 
-     * @return array array of resulting records in which each record is an 
+     *
+     * @return array array of resulting records in which each record is an
      *               associated array, or an emty array.
      */
     public function query($sql, $data=[])
@@ -256,7 +265,7 @@ class Model
 
     public function pagination($args = [], $q = [], $data = [])
     {
-        $per_page  = $args['per_page'] ?: 10;
+        $per_page  = isset($args['per_page']) ? $args['per_page'] : 10;
         $q['select'] = 'count(*)';
         $q['orderby'] = '';
         $q['limit'] = 1;
@@ -268,14 +277,14 @@ class Model
         if ($last < 2)
             return '';
 
-        $base_url = $args['base_url'] ?: '';
+        $base_url = isset($args['base_url']) ? $args['base_url'] : '';
         $sep = strpos($base_url, '?') === false ? '?' : '&';
         $base_url .= $sep . 'page=';
-        $int_pages = $args['int_pages'] ?: 5;
+        $int_pages = isset($args['int_pages']) ? $args['int_pages'] : 5;
 
         $first = 1;
 
-        $current = (int) $_GET['page'] ?: 1;
+        $current = (int) isset($_GET['page']) ? $_GET['page'] : 1;
         $current = $current < $first ? $first : $current;
         $current = $current > $last ? $last : $current;
 
@@ -358,7 +367,7 @@ class Model
 
         $first = 1;
 
-        $current = (int) $_GET['page'] ?: $last;
+        $current = (int) isset($_GET['page']) ? $_GET['page'] : $last;
         $current = $current < $first ? $first : $current;
         $current = $current > $last ? $last : $current;
 

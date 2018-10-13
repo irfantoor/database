@@ -19,7 +19,7 @@ class DatabaseTest extends TestCase
             ],
         ];
     }
-    
+
     public function setup()
     {
         $file = $this->connections()[0]['file'];
@@ -28,33 +28,33 @@ class DatabaseTest extends TestCase
         }
         file_put_contents($file, '');
     }
-    	
-    public function testInstanceOfDatabaseInterface(): void
-	{
-	    $db = new Database($this->connections()[0]);
-	    $this->assertInstanceOf('IrfanTOOR\Database\DatabaseInterface', $db->adapter());
-	}
-	
-	public function testInstanceOfSqlite():void
-	{
-		$db = new Database($this->connections()[0]);
-		$this->assertInstanceOf('IrfanTOOR\Database\SQLite', $db->adapter());
-	}
 
-	public function testInstanceOfMysql():void
-	{
-	    $db = null;
-		$msg = '';
-		try {
-    		$db = new Database($this->connections()[1]);
-    		$this->assertInstanceOf('IrfanTOOR\Database\MySQL', $db->adapter());
-		} catch(\Exception $e) {
-		    $msg = $e->getMessage();
+    public function testInstanceOfDatabaseInterface(): void
+    {
+        $db = new Database($this->connections()[0]);
+        $this->assertInstanceOf('IrfanTOOR\Database\DatabaseInterface', $db->adapter());
+    }
+
+    public function testInstanceOfSqlite():void
+    {
+        $db = new Database($this->connections()[0]);
+        $this->assertInstanceOf('IrfanTOOR\Database\SQLite', $db->adapter());
+    }
+
+    public function testInstanceOfMysql():void
+    {
+        $db = null;
+        $msg = '';
+        try {
+            $db = new Database($this->connections()[1]);
+            $this->assertInstanceOf('IrfanTOOR\Database\MySQL', $db->adapter());
+        } catch(\Exception $e) {
+            $msg = $e->getMessage();
             $expecting1 = "SQLSTATE[HY000] [1045] Access denied for user 'root'@'localhost' (using password: YES)";
-    		$expecting2 = "SQLSTATE[HY000] [2002] Connection refused";
-    		
-    		# tried to create a MySQL instance
-		    $this->assertTrue($expecting1 === $msg || $expecting2 === $msg);
-		}
-	}
+            $expecting2 = "SQLSTATE[HY000] [2002] Connection refused";
+
+            # tried to create a MySQL instance
+            $this->assertTrue($expecting1 === $msg || $expecting2 === $msg);
+        }
+    }
 }

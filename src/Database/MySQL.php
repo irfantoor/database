@@ -33,7 +33,7 @@ use PDO;
 */
 
 
-class MySQL extends AbstractDatabase implements DatabaseInterface
+class MySQL extends AbstractDatabase
 {
     protected $schema;
     protected $indecies;

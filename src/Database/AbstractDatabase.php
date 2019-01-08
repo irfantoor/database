@@ -24,7 +24,7 @@ use PDO;
 
 */
 
-Abstract class AbstractDatabase
+Abstract class AbstractDatabase implements DatabaseInterface
 {
     protected $db;
     protected $defaults;

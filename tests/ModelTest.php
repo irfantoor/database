@@ -1,6 +1,6 @@
 <?php
 
-use PHPUnit\Framework\TestCase;
+use IrfanTOOR\Test;
 
 use IrfanTOOR\Database\Model;
 
@@ -43,7 +43,7 @@ class Users extends Model
 }
 
 
-class ModelTest extends TestCase
+class ModelTest extends Test
 {
     protected $file;
 
@@ -127,6 +127,19 @@ class ModelTest extends TestCase
                 ['id' => 1]
             )
         );
+
+        $this->users->insert([
+            'name' => 'user-1',
+            'email' => 'email1',
+            'password' => 'password',
+        ]);
+
+        $this->assertTrue(
+            $this->users->has(
+                ['where' => 'email=:email'],
+                ['email' => 'email1']
+            )
+        );
     }
 
     public function testModelInsert()
@@ -134,9 +147,8 @@ class ModelTest extends TestCase
         # insert user
         $this->users->insert(
             [
-                'id' => 1,
-                'name' => 'user',
-                'email' => 'email',
+                'name' => 'user-2',
+                'email' => 'email2',
                 'password' => 'password',
             ]
         );
@@ -144,20 +156,34 @@ class ModelTest extends TestCase
         # insert another user
         $this->users->insert(
             [
-                'id' => 2,
-                'name' => 'another user',
-                'email' => 'another email',
-                'password' => 'another password',
+                'name' => 'user-3',
+                'email' => 'email3',
+                'password' => 'password',
             ]
         );
 
         # assert that the user exists now
         $this->assertTrue(
             $this->users->has(
-                ['where' => 'id =:id'],
-                ['id' => 1]
+                ['where' => 'name=:name'],
+                ['name' => 'user-1']
             )
         );
+
+        $e = null;
+
+        try {
+            $this->users->insert(
+                [
+                    'name' => 'Someome',
+                    'email' => 'email2',
+                    'password' => 'some pass',
+                ]
+            );
+        } catch (Exception $e) {
+        }
+
+        $this->assertNotNull($e);
     }
 
     public function testModelGet()
@@ -168,9 +194,10 @@ class ModelTest extends TestCase
         );
 
         # assert if count and the users name are as expected
-        $this->assertEquals(2, count($users));
-        $this->assertEquals('user', $users[0]['name']);
-        $this->assertEquals('another user', $users[1]['name']);
+        $this->assertEquals(3, count($users));
+        $this->assertEquals('user-1', $users[0]['name']);
+        $this->assertEquals('user-2', $users[1]['name']);
+        $this->assertEquals('user-3', $users[2]['name']);
     }
 
     public function testModelGetFirst()
@@ -178,7 +205,7 @@ class ModelTest extends TestCase
         # user with id 3 does not exist
         $user = $this->users->getFirst(
             ['where' => 'id = :id'],
-            ['id' => 3]
+            ['id' => 4]
         );
 
         # assert no user exists!
@@ -191,7 +218,7 @@ class ModelTest extends TestCase
 
         # assert that we have a user and assert his expected name
         $this->assertNotNull($user);
-        $this->assertEquals('another user', $user['name']);
+        $this->assertEquals('user-3', $user['name']);
     }
 
 
@@ -212,15 +239,13 @@ class ModelTest extends TestCase
         );
 
         # assert expected values
-        $this->assertEquals('user', $user['name']);
-        $this->assertEquals('email', $user['email']);
+        $this->assertEquals('user-1', $user['name']);
+        $this->assertEquals('email1', $user['email']);
         $this->assertEquals('password', $user['password']);
 
         # update password
         $this->users->update(
-            [
-                'where' => 'id = :id',
-            ],
+            ['where' => 'id=:id'],
             [
                 'id' => 1,
                 'password' => 'updated password',
@@ -234,8 +259,8 @@ class ModelTest extends TestCase
         );
 
         # assert expected values
-        $this->assertEquals('user', $user['name']);
-        $this->assertEquals('email', $user['email']);
+        $this->assertEquals('user-1', $user['name']);
+        $this->assertEquals('email1', $user['email']);
         $this->assertEquals('updated password', $user['password']);
     }
 
@@ -246,52 +271,56 @@ class ModelTest extends TestCase
         $this->assertFalse(
             $this->users->has(
                 ['where' => 'id =:id'],
-                ['id' => 3]
+                ['id' => 4]
             )
         );
 
-        # it will do an insert as id 3 does not exists
-        $this->users->insertOrUpdate(
+        # it will do an insert as id 4 does not exists
+        $result = $this->users->insertOrUpdate(
             [
-                'id' => 3,
+                'id' => 4,
                 'name' => 'inserted user',
                 'email' => 'inserted email',
                 'password' => 'inserted password',
             ]
         );
 
-        # id 3 exists now
+        $this->assertTrue($result);
+        
+        # id 4 exists now
         $this->assertTrue(
             $this->users->has(
                 ['where' => 'id =:id'],
-                ['id' => 3]
+                ['id' => 4]
             )
         );
 
         # assert the expected values
         $user = $this->users->getFirst(
             ['where' => 'id = :id'],
-            ['id' => 3]
+            ['id' => 4]
         );
 
         $this->assertEquals('inserted user', $user['name']);
         $this->assertEquals('inserted email', $user['email']);
         $this->assertEquals('inserted password', $user['password']);
 
-        # it will update as id 3 already exists
-        $this->users->insertOrUpdate(
+        # it will update as id 4 already exists
+        $result = $this->users->insertOrUpdate(
             [
-                'id' => 3,
+                'id' => 4,
                 'name' => 'inserted user',
                 'email' => 'inserted email',
                 'password' => 'updated password',
             ]
         );
 
+        $this->assertTrue($result);
+
         # assert the expected values
         $user = $this->users->getFirst(
             ['where' => 'id = :id'],
-            ['id' => 3]
+            ['id' => 4]
         );
 
         $this->assertEquals('inserted user', $user['name']);
@@ -305,21 +334,21 @@ class ModelTest extends TestCase
         $this->assertTrue(
             $this->users->has(
                 ['where' => 'id =:id'],
-                ['id' => 3]
+                ['id' => 4]
             )
         );
 
         # remove id 3
         $this->users->remove(
             ['where' => 'id = :id'],
-            ['id' => 3]
+            ['id' => 4]
         );
 
         # id 3 does not exists
         $this->assertFalse(
             $this->users->has(
                 ['where' => 'id =:id'],
-                ['id' => 3]
+                ['id' => 4]
             )
         );
     }
@@ -337,7 +366,7 @@ class ModelTest extends TestCase
         $col1 = $row1[0];
 
         $this->assertTrue(is_array($result));
-        $this->assertEquals(2, $col1);
+        $this->assertEquals(3, $col1);
 
         $result2 = $this->users->get(
             [

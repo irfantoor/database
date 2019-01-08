@@ -1,11 +1,11 @@
 <?php
 
-use PHPUnit\Framework\TestCase;
+use IrfanTOOR\Test;
 
 use IrfanTOOR\Database;
 use IrfanTOOR\Database\DatabaseInterface;
 
-class DatabaseTest extends TestCase 
+class DatabaseTest extends Test
 {
     public function connections()
     {
@@ -32,7 +32,8 @@ class DatabaseTest extends TestCase
     public function testInstanceOfDatabaseInterface(): void
     {
         $db = new Database($this->connections()[0]);
-        $this->assertInstanceOf('IrfanTOOR\Database\DatabaseInterface', $db->adapter());
+        $this->assertInstanceOf('IrfanTOOR\Database\SQLite', $db->adapter());
+        $this->assertImplements('IrfanTOOR\Database\DatabaseInterface', $db->adapter());
     }
 
     public function testInstanceOfSqlite():void

@@ -23,7 +23,7 @@ use PDO;
     $post = $db->getFirst(['orderby' => 'id DESC', 'limit' => 1]);
 */
 
-class SQLite extends AbstractDatabase implements DatabaseInterface
+class SQLite extends AbstractDatabase
 {
 
     /*

@@ -2,7 +2,7 @@
 
 namespace IrfanTOOR\Database;
 
-use IrfanTOOR\Engine\Exception;
+use Exception;
 use PDO;
 
 /*

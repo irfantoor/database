@@ -4,6 +4,7 @@ namespace IrfanTOOR\Database;
 
 use Exception;
 use PDO;
+use PDOException;
 
 /*
 

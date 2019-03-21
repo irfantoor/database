@@ -25,5 +25,5 @@ class Constants
 {
     public const NAME        = 'Irfan\'s Database';
     public const DESCRIPTION = 'A bare-minimum Database connectivity';
-    public const VERSION     = '0.2.4';
+    public const VERSION     = '0.2.5';
 }

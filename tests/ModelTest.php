@@ -1,86 +1,103 @@
 <?php
-
+/**
+ * ModelTest
+ * php version 7.3
+ *
+ * @package   IrfanTOOR\Database
+ * @author    Irfan TOOR <email@irfantoor.com>
+ * @copyright 2020 Irfan TOOR
+ */
 use IrfanTOOR\Test;
 
 use IrfanTOOR\Database\Model;
-
-class Users extends Model
-{
-    function __construct($connection)
-    {
-        $this->schema = [
-            'id INTEGER PRIMARY KEY',
-
-            'name NOT NULL',
-            'email COLLATE NOCASE',
-            'password NOT NULL',
-            'token',
-            'validated BOOL DEFAULT false',
-
-            'created_on DATETIME DEFAULT CURRENT_TIMESTAMP',
-            'updated_on INTEGER'
-        ];
-
-        $this->indecies = [
-            ['index'  => 'name'],
-            ['unique' => 'email'],
-        ];
-
-        parent::__construct($connection);
-    }
-
-    # only above definition is sufficient for development
-    # the following two functions are for the tests only
-    function schema()
-    {
-        return $this->schema;
-    }
-
-    function indecies()
-    {
-        return $this->indecies;
-    }
-}
-
+use IrfanTOOR\Database\SQLite;
+use Tests\Users;
 
 class ModelTest extends Test
 {
-    protected $file;
-
-    public function setup()
+    public function __construct()
     {
-        $this->file = __DIR__ . '/db/users.sqlite';
-        if (!file_exists($this->file)) {
-            file_put_contents($this->file, '');
-        }
-        $this->users = new Users(['file' => $this->file]);
-    }
+        $file = $this->getFile();
 
-    public function testInstanceOfModel(): void
-    {
-        if (file_exists($this->file)) {
-            unlink($this->file);
-        }
-        file_put_contents($this->file, '');
-
-        $this->assertInstanceOf('IrfanTOOR\Database\Model', $this->users);
-    }
-
-    public function testModelGetFile(): void
-    {
-        $this->assertEquals($this->file, $this->users->getFile());
-    }
-
-    public function testModelGetSchema(): void
-    {
-        $schema = $this->users->getSchema();
-
-        foreach($this->users->schema() as $fld) {
-            $this->assertTrue(strpos($schema, $fld) !== false);
+        # unlink the existing file
+        if (file_exists($file)) {
+            unlink($file);
         }
 
-        foreach($this->users->indecies() as $index) {
-            foreach($index as $type => $fld) {
+        # reset the file
+        file_put_contents($file, '');
+
+        $users = $this->getUsers();
+        $schema = $users->prepareSchema();
+        $users->deploySchema($schema);
+    }
+
+    public function getFile()
+    {
+        return __DIR__ . '/db/users.sqlite';
+    }
+
+    public function getUsers()
+    {
+        $file = $this->getFile();
+        return new Users(['file' => $file]);
+    }
+
+    public function testInstanceOfModel()
+    {
+        $users = $this->getUsers();
+
+        $this->assertInstanceOf(Users::class, $users);
+        $this->assertInstanceOf(Model::class, $users);
+    }
+
+    public function testModelConstructor()
+    {
+        $file = $this->getFile();
+
+        # table name is provided
+        $users = new Users(['file' => $file, 'table' => 'users_table']);
+        $this->assertEquals('users_table', $users->getVar('table'));
+
+        # table deos not exist
+        $this->assertException(
+            function () use($users) {
+                $users->get();
+            }
+        );
+
+        # table name is not provided
+        # Model class is 'Users' => table name is strtolower of (classname)
+        $users = new Users(['file' => $file]);
+        $this->assertEquals('users', $users->getVar('table'));
+        $this->assertArray($users->get());
+    }
+
+    public function testModelGetFile()
+    {
+        $users = $this->getUsers();
+        $this->assertEquals($this->getFile(), $users->getDatabaseFile());
+    }
+
+    public function testModelPrepareSchema()
+    {
+        $file = $this->getFile();
+        unlink($file);
+        file_put_contents($file, '');
+
+        $users = $this->getUsers();
+        $schema = $users->prepareSchema();
+
+        foreach ($users->getVar('schema') as $fld => $def) {
+            if (is_int($fld)) {
+                $fld = $def;
+            };
+
+            $this->assertTrue(strpos($schema, $fld) !== true);
+        }
+
+        foreach ($users->getVar('indices') as $index) {
+            foreach ($index as $type => $fld) {
                 $find = strtoupper($type);
                 if ($find !== 'INDEX')
                     $find .= ' INDEX';
@@ -93,59 +110,76 @@ class ModelTest extends Test
         }
     }
 
-    public function testModelCreateOnNonExisting(): void
+    public function testModelDeploySchema()
     {
-        $e = null;
-        $msg = '';
-        try {
-            $this->users->create();
-        } catch(\Exception $e) {
-            $msg = $e->getMessage();
-        }
-        $this->assertNull($e);
-    }
+        $users = $this->getUsers();
+        
+        # There is no table
+        $this->assertException(
+            function () use ($users) {
+                $r = $users->get();
+            },
+            Exception::class,
+            "SQLSTATE[HY000]: General error: 1 no such table: users"
+        );
 
-    public function testModelCreateOnAlreadyExisting(): void
-    {
-        $e = null;
-        $msg = '';
-        try {
-            $this->users->create();
-        } catch(\Exception $e) {
-            $msg = $e->getMessage();
-        }
-        $this->assertNotNull($e);
-        $this->assertEquals($msg, 'SQLSTATE[HY000]: General error: 1 index users_name_index already exists');
+        # Deploy the schema
+        $schema = $users->prepareSchema();
+        $users->deploySchema($schema);
+
+        # try getting now
+        $r = $users->get();
+        $this->assertArray($r);
+        $this->assertEquals([], $r);
+
+        # try deploying on a database on which we have already deplyed the schema
+        $this->assertException(
+            function () use($users, $schema) {
+                $users->deploySchema($schema);
+            },
+            Exception::class,
+            "SQLSTATE[HY000]: General error: 1 index users_name_index already exists"
+        );
     }
 
     public function testModelHas()
     {
+        $users = $this->getUsers();
+
         # no data has been inserted so far!
         $this->assertFalse(
-            $this->users->has(
-                ['where' => 'id =:id'],
-                ['id' => 1]
-            )
+            $users->has([
+                'where' => 'id =:id',
+                'bind'  => ['id' => 1],
+            ])
         );
 
-        $this->users->insert([
+        # No record in the database
+        $this->assertFalse($users->has());
+
+        $users->insert([
             'name' => 'user-1',
             'email' => 'email1',
             'password' => 'password',
         ]);
 
         $this->assertTrue(
-            $this->users->has(
-                ['where' => 'email=:email'],
-                ['email' => 'email1']
-            )
+            $users->has([
+                'where' => 'email = :email',
+                'bind'  => ['email' => 'email1']
+            ])
         );
+
+        # database has records!
+        $this->assertTrue($users->has());
     }
 
     public function testModelInsert()
     {
+        $users = $this->getUsers();
+
         # insert user
-        $this->users->insert(
+        $users->insert(
             [
                 'name' => 'user-2',
                 'email' => 'email2',
@@ -154,7 +188,7 @@ class ModelTest extends Test
         );
 
         # insert another user
-        $this->users->insert(
+        $users->insert(
             [
                 'name' => 'user-3',
                 'email' => 'email3',
@@ -164,57 +198,54 @@ class ModelTest extends Test
 
         # assert that the user exists now
         $this->assertTrue(
-            $this->users->has(
-                ['where' => 'name=:name'],
-                ['name' => 'user-1']
-            )
+            $users->has([
+                'where' => 'name = :name',
+                'bind'  => ['name' => 'user-1']
+            ])
         );
 
-        $e = null;
-
-        try {
-            $this->users->insert(
-                [
-                    'name' => 'Someome',
-                    'email' => 'email2',
-                    'password' => 'some pass',
-                ]
-            );
-        } catch (Exception $e) {
-        }
-
-        $this->assertNotNull($e);
+        $this->assertException(
+            function () use($users) {
+                $users->insert(
+                    [
+                        'name'     => 'Someome',
+                        'email'    => 'email2',
+                        'password' => 'some pass',
+                    ]
+                );
+            }
+        );
     }
 
     public function testModelGet()
     {
+        $users = $this->getUsers();
+
         # get the list of users
-        $users = $this->users->get(
-            ['limit' => 10]
-        );
+        $list = $users->get();
 
         # assert if count and the users name are as expected
-        $this->assertEquals(3, count($users));
-        $this->assertEquals('user-1', $users[0]['name']);
-        $this->assertEquals('user-2', $users[1]['name']);
-        $this->assertEquals('user-3', $users[2]['name']);
+        $this->assertEquals(3, count($list));
+        $this->assertEquals('user-1', $list[0]['name']);
+        $this->assertEquals('user-2', $list[1]['name']);
+        $this->assertEquals('user-3', $list[2]['name']);
     }
 
     public function testModelGetFirst()
     {
+        $users = $this->getUsers();
+
         # user with id 3 does not exist
-        $user = $this->users->getFirst(
-            ['where' => 'id = :id'],
-            ['id' => 4]
-        );
+        $user = $users->getFirst([
+            'where' => 'id = :id',
+            'bind' => ['id' => 4]
+        ]);
 
         # assert no user exists!
         $this->assertNull($user);
 
         # get the first user in reverse order
-        $user = $this->users->getFirst(
-            ['orderby' => 'id desc']
-        );
+        $user = $users->getFirst(['order_by' => 'id desc']);
 
         # assert that we have a user and assert his expected name
         $this->assertNotNull($user);
@@ -224,39 +255,41 @@ class ModelTest extends Test
 
     public function testModelUpdate()
     {
+        $users = $this->getUsers();
+
         # id 1 exists
-        $this->assertTrue(
-            $this->users->has(
-                ['where' => 'id =:id'],
-                ['id' => 1]
-            )
-        );
+        $this->assertTrue($users->has(['where' => 'id = 1']));
 
         # get this record
-        $user = $this->users->getFirst(
-            ['where' => 'id = :id'],
-            ['id' => 1]
-        );
+        $user = $users->getFirst(['where' => 'id = 1']);
 
         # assert expected values
-        $this->assertEquals('user-1', $user['name']);
-        $this->assertEquals('email1', $user['email']);
+        $this->assertEquals('user-1',   $user['name']);
+        $this->assertEquals('email1',   $user['email']);
         $this->assertEquals('password', $user['password']);
 
         # update password
-        $this->users->update(
-            ['where' => 'id=:id'],
+        $users->update(
             [
-                'id' => 1,
-                'password' => 'updated password',
+                'id' => 4,
+                'password' => 'updated password'
+            ], # record
+            [
+                'where' => 'id = :id',
+                'bind'  => [
+                    'id' => 1,
+                ],
             ]
         );
 
+        $this->assertFalse($users->has(['where' => 'id = 1']));
+        $user = $users->getFirst(['where' => 'id = 4']);
+        $this->assertEquals('4', $user['id']);
+        $this->assertEquals('email1', $user['email']);
+        $this->assertEquals('updated password', $user['password']);
+
         # get the record
-        $user = $this->users->getFirst(
-            ['where' => 'id = :id'],
-            ['id' => 1]
-        );
+        $user = $users->getFirst(['where' => 'id = 4']);
 
         # assert expected values
         $this->assertEquals('user-1', $user['name']);
@@ -266,51 +299,43 @@ class ModelTest extends Test
 
     public function testModelInsertOrUpdate()
     {
+        $users = $this->getUsers();
 
-        # id 3 does not exists
+        # id 1 does not exists, updated in a previous test
         $this->assertFalse(
-            $this->users->has(
-                ['where' => 'id =:id'],
-                ['id' => 4]
-            )
+            $users->has(['where' => 'id = 1'])
         );
 
-        # it will do an insert as id 4 does not exists
-        $result = $this->users->insertOrUpdate(
+        # it will do an insert as id 1 does not exists
+        $result = $users->insertOrUpdate(
             [
-                'id' => 4,
-                'name' => 'inserted user',
-                'email' => 'inserted email',
+                'id'       => 1,
+                'name'     => 'inserted user',
+                'email'    => 'inserted email',
                 'password' => 'inserted password',
             ]
         );
 
         $this->assertTrue($result);
         
-        # id 4 exists now
+        # id 1 is inserted as it exists now
         $this->assertTrue(
-            $this->users->has(
-                ['where' => 'id =:id'],
-                ['id' => 4]
-            )
+            $users->has(['where' => 'id = 1'])
         );
 
         # assert the expected values
-        $user = $this->users->getFirst(
-            ['where' => 'id = :id'],
-            ['id' => 4]
-        );
+        $user = $users->getFirst(['where' => "id = '1'"]);
 
         $this->assertEquals('inserted user', $user['name']);
         $this->assertEquals('inserted email', $user['email']);
         $this->assertEquals('inserted password', $user['password']);
 
-        # it will update as id 4 already exists
-        $result = $this->users->insertOrUpdate(
+        # it will update as id 1 already exists
+        $result = $users->insertOrUpdate(
             [
-                'id' => 4,
-                'name' => 'inserted user',
-                'email' => 'inserted email',
+                'id'       => 1,
+                'name'     => 'updated user',
+                'email'    => 'inserted email',
                 'password' => 'updated password',
             ]
         );
@@ -318,66 +343,104 @@ class ModelTest extends Test
         $this->assertTrue($result);
 
         # assert the expected values
-        $user = $this->users->getFirst(
-            ['where' => 'id = :id'],
-            ['id' => 4]
-        );
+        $user = $users->getFirst(['where' => 'id = 1']);
 
-        $this->assertEquals('inserted user', $user['name']);
-        $this->assertEquals('inserted email', $user['email']);
+        $this->assertEquals('updated user',     $user['name']);
+        $this->assertEquals('inserted email',   $user['email']);
         $this->assertEquals('updated password', $user['password']);
     }
 
     public function testModelRemove()
     {
-        # id 3 does not exists
-        $this->assertTrue(
-            $this->users->has(
-                ['where' => 'id =:id'],
-                ['id' => 4]
-            )
-        );
+        $users = $this->getUsers();
 
-        # remove id 3
-        $this->users->remove(
-            ['where' => 'id = :id'],
-            ['id' => 4]
-        );
-
-        # id 3 does not exists
-        $this->assertFalse(
-            $this->users->has(
-                ['where' => 'id =:id'],
-                ['id' => 4]
-            )
-        );
+        $this->assertTrue($users->has(['where' => 'id = 4']));
+        $users->remove(['where' => 'id = 4']);
+        $this->assertFalse($users->has(['where' => 'id = 4']));
     }
 
-    public function testModelQuery(): void
+    public function testSetBaseUrl()
     {
-        $result = $this->users->query(
-            'SELECT count(*) from users where id < :max_id',
-            [
-                'max_id' => 10
-            ]
-        );
+        $users = $this->getUsers();
 
-        $row1 = $result[0];
-        $col1 = $row1[0];
+        $this->assertTrue(method_exists($users, 'setBaseUrl'));
+        $this->assertEquals('/', $users->getVar('base_url'));
+        $users->setBaseUrl('/its/a/test/');
+        $this->assertEquals('/its/a/test/', $users->getVar('base_url'));
+    }
 
-        $this->assertTrue(is_array($result));
-        $this->assertEquals(3, $col1);
+    public function testSetPerPage()
+    {
+        $users = $this->getUsers();
 
-        $result2 = $this->users->get(
-            [
-                'where' => 'id < :max_id',
-                'select' => 'count(*)',         # order is not important
-            ],
-            [
-                'max_id' => 10,
-            ]
-        );
+        $this->assertTrue(method_exists($users, 'setPerPage'));
+        $this->assertEquals(10, $users->getVar('per_page'));
+        $users->setPerPage(1);
+        $this->assertEquals(1, $users->getVar('per_page'));
+    }
 
-        $this->assertEquals($result, $result2);
+    public function testSetIntermediatePages()
+    {
+        $users = $this->getUsers();
+
+        $this->assertTrue(method_exists($users, 'setIntermediatePages'));
+        $this->assertEquals(5, $users->getVar('int_pages'));
+        $users->setIntermediatePages(7);
+        $this->assertEquals(7, $users->getVar('int_pages'));
+    }
+
+    public function testGetPagination()
+    {
+        $users = $this->getUsers();
+
+        $this->assertTrue(method_exists($users, 'getPagination'));
+        $users->setPerPage(3);
+        $pagination = $users->getPagination();
+        $this->assertEquals('', $pagination);
+
+        $users->setPerPage(2);
+        $pagination = $users->getPagination();
+
+        $this->assertString($pagination);
+        $this->assertNotEquals('', $pagination);
+        $this->assertTrue(strpos($pagination, 'page=1') === false);
+        $this->assertTrue(strpos($pagination, 'page=2') !== false);
+
+        $users->setPerPage(1);
+        $pagination = $users->getPagination();
+
+        $this->assertString($pagination);
+        $this->assertNotEquals('', $pagination);
+        $this->assertTrue(strpos($pagination, 'page=1') === false);
+        $this->assertTrue(strpos($pagination, 'page=2') !== false);
+        $this->assertTrue(strpos($pagination, 'page=3') !== false);
+    }
+
+    public function testGetReversePagination()
+    {
+        $users = $this->getUsers();
+
+        $this->assertTrue(method_exists($users, 'getReversePagination'));
+        $users->setPerPage(3);
+        $pagination = $users->getReversePagination();
+        $this->assertEquals('', $pagination);
+
+        $users->setPerPage(2);
+        $pagination = $users->getReversePagination();
+
+        $this->assertString($pagination);
+        $this->assertNotEquals('', $pagination);
+
+        $this->assertTrue(strpos($pagination, 'page=1') !== false);
+        $this->assertTrue(strpos($pagination, 'page=2') === false);
+
+        $users->setPerPage(1);
+        $pagination = $users->getReversePagination();
+
+        $this->assertString($pagination);
+        $this->assertNotEquals('', $pagination);
+        $this->assertTrue(strpos($pagination, 'page=1') !== false);
+        $this->assertTrue(strpos($pagination, 'page=2') !== false);
+        $this->assertTrue(strpos($pagination, 'page=3') === false);        
     }
 }

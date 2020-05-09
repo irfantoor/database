@@ -1,114 +1,191 @@
 <?php
-
+/**
+ * IrfanTOOR\Database\Model
+ * php version 7.3
+ *
+ * @package   IrfanTOOR\Database
+ * @author    Irfan TOOR <email@irfantoor.com>
+ * @copyright 2020 Irfan TOOR
+ */
 namespace IrfanTOOR\Database;
 
 use Exception;
 use IrfanTOOR\Database\SQLite;
+use Throwable;
 
-/*
-    !!! NOTE: Currently Model only supports SQLite db
-
-    e.g.
-    class Users extends IrfanTOOR\Database\Model
-    {
-        function __construct($connection)
-        {
-            $this->schema = [
-                'id INTEGER PRIMARY KEY',
-
-                'name NOT NULL',
-                'email COLLATE NOCASE',
-                'password NOT NULL',
-                'token',
-                'validated BOOL DEFAULT false',
-
-                'created_on DATETIME DEFAULT CURRENT_TIMESTAMP',
-                'updated_on INTEGER'
-            ];
-
-            $this->indecies = [
-                ['index'  => 'name'],
-                ['unique' => 'email'],
-            ];
-
-            parent::__construct($connection)
-        }
-    }
-
-    $users = new Users(['file' => 'users.sqlite', 'table' => 'users']);
-    $user->addOrUpdate(
-        [
-            'name' => 'Someone',
-            'email' => 'someone@eample.com',
-            'password' => 'Hello World!',
-        ]
-    );
-
-    $user = $users->getFirst(
-        ['where' => 'id = :id'],
-        ['id' => $_GET['id']]
-    );
-
-    print_r($user['email']);
-
-*/
-
+/**
+ *   !!! NOTE: Currently Model only supports SQLite db
+ *
+ *   e.g.
+ *   class Users extends IrfanTOOR\Database\Model
+ *   {
+ *       function __construct($connection)
+ *       {
+ *           $this->schema = [
+ *               'id' => 'INTEGER PRIMARY KEY',
+ *
+ *               'name'       => 'NOT NULL',
+ *               'email'      => 'COLLATE NOCASE',
+ *               'password'   => 'NOT NULL',
+ *               'token',
+ *               'validated'  => 'BOOL DEFAULT false',
+ *
+ *               'created_on' => 'DATETIME DEFAULT CURRENT_TIMESTAMP',
+ *               'updated_on' => 'INTEGER'
+ *           ];
+ *
+ *           $this->indices = [
+ *               ['index'  => 'name'],
+ *               ['unique' => 'email'],
+ *           ];
+ *
+ *           parent::__construct($connection);
+ *       }
+ *   }
+ *
+ *   $users = new Users(['file' => 'users.sqlite', 'table' => 'users']);
+ *   $user->addOrUpdate(
+ *       [
+ *           'name' => 'Someone',
+ *           'email' => 'someone@eample.com',
+ *           'password' => 'Hello World!',
+ *       ]
+ *   );
+ *
+ *   $user = $users->getFirst([
+ *          'where' => 'id = :id',
+ *          'bind' => ['id' => $_GET['id']],
+ *   ]);
+ *
+ *   print_r($user['email']);
+ */
 class Model
 {
-    protected $schema;
-    protected $indecies;
-    protected $db;
-    protected $file;
-    protected $table;
+    /**
+     * @var array
+     */
+    protected $schema = [];
 
-    function __construct($connection = [])
+    /**
+     * @var array
+     */
+    protected $indices = [];
+
+    /**
+     * @var SQlite
+     */
+    protected $db = null;
+
+    /**
+     * Sqlite database file
+     *
+     * @var string
+     */
+    protected $file = '';
+
+    /**
+     * Name of the table, the model is based upon
+     *
+     * @var string
+     */
+    protected $table = '';
+
+    /**
+     * Base url to be used during pagination
+     *
+     * @var string
+     */
+    protected $base_url = "/";
+
+    /**
+     * Number of results present per page
+     *
+     * @var int
+     */
+    protected $per_page = 10;
+
+    /**
+     * Interval of pages to be printed while preparing pagination
+     *
+     * @var int
+     */
+    protected $int_pages = 5;
+
+    /**
+     * Model constructor
+     *
+     * @param array $connection
+     */
+    function __construct(array $connection = [])
     {
-        $file  = isset($connection['file']) ? $connection['file'] : null;
-        $table = isset($connection['table']) ? $connection['table'] : null;
+        $this->file = $connection['file'] ?? null;
 
+        if (!$this->file) {
+            throw new Exception("file key is missing in the connection");
+        } elseif (!is_string($this->file)) {
+            throw new Exception("file key in the connection must be a string");
+        } elseif (!file_exists($this->file)) {
+            throw new Exception("file: {$this->file}, does not exist");
+        }
+
+        $table = $connection['table'] ?? null;
+
+        # convert modelname to tablename e.g. Users::class will create the table 'users'
         if (!$table) {
             $class = explode('\\', get_called_class());
             $table = strtolower(array_pop($class));
         }
+
         $this->table = $table;
 
-        if (!$file) {
-            $file = $table . '.sqlite';
-        }
-        $this->file = $file;
-
         try {
-            $this->db    = new SQLite(['file' => $file]);
-        } catch(Exception $e) {
+            $this->db = new SQLite(['file' => $this->file]);
+        } catch (Throwable $e) {
             throw new Exception($e->getMessage());
         }
     }
 
-    function getFile()
+    /**
+     * Retrieves the name of the database file
+     *
+     * @return string
+     */
+    function getDatabaseFile(): string
     {
         return $this->file;
     }
 
     /**
-     * Creates the schema of the DB according to the defined
+     * Prepares a schema of the datbase from model definition and returns it
+     *
+     * @return string Raw SQL schema, prepared from the definition of schema and
+     *                indices, which were provided while wrinting the model 
+     *                (ref: Creating a Model), is returned. This schema can be used
+     *                to create the sqlite file manually.
      */
-    function getSchema()
+    function prepareSchema(): string
     {
         # Database structure
         $schema = 'CREATE TABLE IF NOT EXISTS ' . $this->table . ' (';
-        $sep = PHP_EOL;
+        $sep    = PHP_EOL;
 
-        foreach($this->schema as $fld) {
-            $schema .= $sep . $fld;
+        foreach ($this->schema as $fld => $def) {
+            if (is_int($fld)) {
+                $fld = $def;
+                $def = '';
+            }
+
+            $schema .= $sep . $fld . ' ' . $def;
             $sep = ', ' . PHP_EOL;
         }
 
         $schema .= PHP_EOL . ');' . PHP_EOL;
 
-        # Indecies
-        foreach($this->indecies as $index) {
-            foreach($index as $type=>$field) {
+        # Add indices
+        foreach ($this->indices as $index) {
+            foreach ($index as $type=>$field) {
                 $type = strtolower($type);
+
                 switch ($type) {
                     case 'u':
                     case 'unique':
@@ -119,6 +196,7 @@ class Model
                     default:
                         $schema .=  'CREATE INDEX ';
                 }
+
                 $schema .=
                     "{$this->table}_{$field}_{$type}" .
                     ' ON ' . $this->table . '(' . $field . ');' . PHP_EOL;
@@ -129,158 +207,188 @@ class Model
     }
 
     /*
-     * Try to create the schema in the connected db
+     * Deploy the schema
      *
-     * @param $type
+     * @param string $schema - The schema to be deployed to the connected file
+     *
+     * @throws Exception in case of error
+     *
+     * @return void
      */
-    public function create()
+    public function deploySchema(string $schema)
     {
         try {
-            $schema = explode(';', str_replace(PHP_EOL, '', $this->getSchema()));
+            $schema = explode(';', str_replace(PHP_EOL, '', $schema));
+
+            # removes the empty element at end
             array_pop($schema);
 
-            # db structure
+            # create the db structure
             $sql = array_shift($schema);
             $this->db->query($sql . ';');
 
-            # indecies
-            foreach($schema as $sql) {
+            # create the indices now
+            foreach ($schema as $sql) {
                 $this->db->query($sql . ';');
             }
-        } catch(Exception $e) {
+        } catch(Throwable $e) {
             throw new Exception($e->getMessage(), 1);
         }
     }
 
-    /*
-     * Checks if the db has the record
+    /**
+     * Inserts a record
      *
-     * @param array $q    different elements of sql
-     * @param array $data elements used for binding
+     * see DatabaseEngineInterface::insert for notes
      *
-     * @return BOOL true if the record exists with the given conditions, false
-     *              otherwise
+     * @param array $record - Associative array represnting one record
+     * @param array $bind - The data we need to bind to the :placeholders in $record
+     *
+     * @return bool - result of the operation
      */
-    public function has($q = [], $data = [])
+    public function insert(array $record, array $bind = [])
     {
-        $q['table'] = $this->table;
-        return $this->db->has($q, $data);
+        return $this->db->insert($this->table, $record, $bind);
     }
 
     /**
-     * Gets the list as predfined by any previous functional operators
+     * Insert or update a record
      *
-     * @param array $q    different elements of sql
-     * @param array $data elements used for binding
+     * see SQLite::insertOrUpdate for notes
      *
-     * @return array array of resulting records in which each record is an
-     *               associated array, or an emty array.
+     * @param array $record - Associative array represnting one record
+     * @param array $bind - The data we need to bind to the :placeholders in $record
      */
-    public function get($q = [], $data = [], $pagination = null)
+    public function insertOrUpdate(array $record, array $bind = [])
     {
-        $q['table'] = $this->table;
-        return $this->db->get($q, $data);
+        return $this->db->insertOrUpdate($this->table, $record, $bind);
     }
 
     /**
-     * Gets the first item as predfined by any previous functional operators
+     * Update an existing record
      *
-     * @param array $q    different elements of sql
-     * @param array $data elements used for binding
+     * see DatabaseEngineInterface::update for notes
      *
-     * @return array|null the first matching record as associated array or null
+     * @param array $record - Associative array represnting one record
+     * @param array $options - The where clause or the binding data etc.
      */
-     public function getFirst($q = [], $data = [])
-     {
-         $q['limit'] = 1;
-         $list = $this->get($q, $data);
-
-         return (count($list)) ? $list[0] : null;
-     }
-
-    /**
-     * inserts a record
-     *
-     * @param array $data an assoicated array representing a record to be
-     *                    inserted
-     */
-    public function insert($data)
+    public function update(array $record, array $options = [])
     {
-        return $this->db->insert($this->table, $data);
+        return $this->db->update($this->table, $record, $options);
     }
 
     /**
-     * inserts or updates a record
+     * Remove an existing record
      *
-     * @param array $data an assoicated array representing a record to be
-     *                    inserted or updated. If no record is present with the
-     *                    given details, a record is inserted or an existing is
-     *                    updated
+     * see DatabaseEngineInterface::remove for notes
+     *
+     * @param array $options - The where clause or the binding data etc.
      */
-    public function insertOrUpdate($data)
+    public function remove(array $options)
     {
-        return $this->db->insertOrUpdate($this->table, $data);
+        return $this->db->remove($this->table, $options);
     }
 
     /**
-     * updates a record
+     * Retrieve a list of records
      *
-     * @param array $data an assoicated array representing a record to be
-     *                    updated. Note id can not be changed to updated
+     * see DatabaseEngineInterface::get for notes
+     *
+     * @param array $options - The where clause, or the binding data etc.
+     *                         this might include the order_by and limit parameters
      */
-    public function update($q, $data)
+    public function get(array $options = [])
     {
-        $q['table'] = $this->table;
-        return $this->db->update($q, $data);
+        return $this->db->get($this->table, $options);
     }
 
     /**
-     * removes records
+     * Retrieve the first record
      *
-     * @param array $q    different elements of sql
-     * @param array $data elements used for binding
+     * see DatabaseEngineInterface::getFirst for notes
+     *
+     * @param array $options - The where clause or the binding data etc.
+     *                         this might include the order_by and limit parameters
      */
-    public function remove($q, $data = [])
+    public function getFirst(array $options = [])
     {
-        $q['table'] = $this->table;
-        $q['limit'] = 1;
-
-        return $this->db->remove($q, $data);
+        return $this->db->getFirst($this->table, $options);
     }
 
     /**
-     * executes a sql statement, binding the provided variables
+     * Verify if a record exists
      *
-     * @param string $sql  sql statement
-     * @param array  $data array with associated elements for binding
-     *
-     * @return array array of resulting records in which each record is an
-     *               associated array, or an emty array.
+     * @param array $options - The where clause or the binding data etc.
      */
-    public function query($sql, $data=[])
+    public function has($options = [])
     {
-        return $this->db->query($sql, $data);
+        $r = $this->getFirst($options);
+        return $r ? true : false;
     }
 
-
-    public function pagination($args = [], $q = [], $data = [])
+    /**
+     * Set the base url
+     *
+     * @param string url - base url to be used while doing the pagination
+     */
+    public function setBaseUrl(string $url)
     {
-        $per_page  = isset($args['per_page']) ? $args['per_page'] : 10;
-        $q['select'] = 'count(*)';
-        $q['orderby'] = '';
-        $q['limit'] = 1;
+        # todo -- validate url
+        $this->base_url = $url;
+    }
 
-        $r = $this->getFirst($q, $data);
-        $total = $r[0];
+    /**
+     * Set the number of entries per page
+     *
+     * @param int $per_page - number of entries to be displayed on a page
+     */
+    public function setPerPage(int $per_page)
+    {
+        $this->per_page = $per_page;
+    }
+
+    /**
+     * Number of intermediate pages
+     *
+     * @param int $int_page - number of intermediate pages to be displayed in the
+     *                        pagination bar
+     */
+    public function setIntermediatePages(int $int_pages)
+    {
+        if ($int_pages % 2 === 0) {
+            $int_pages += 1;
+        }
+
+        $this->int_pages = $int_pages;
+    }
+
+    /**
+     * Retrieve the pagination
+     *
+     * # todo -- add a parameter to do the reverse order pagination
+     *
+     * @param array $options - The where clause or the binding data etc.
+     *
+     * @return string - html block which can be displayed directly in an html page
+     */
+    public function getPagination($options = []): string
+    {
+        $per_page  = $this->per_page;
+
+        $options['select'] = 'count(*)';
+        $options['orderby'] = '';
+        $options['limit'] = 1;
+
+        $total = $this->getFirst($options)[0];
         $last  = ceil($total / $per_page);
 
         if ($last < 2)
             return '';
 
-        $base_url = isset($args['base_url']) ? $args['base_url'] : '';
+        $base_url = $this->base_url;
         $sep = strpos($base_url, '?') === false ? '?' : '&';
         $base_url .= $sep . 'page=';
-        $int_pages = isset($args['int_pages']) ? $args['int_pages'] : 5;
+        $int_pages = $this->int_pages;
 
         $first = 1;
 
@@ -346,24 +454,31 @@ class Model
         return ob_get_clean();
     }
 
-    public function paginationReverse($args = [], $q = [], $data = [])
+    /**
+     * Retrieve the reverse pagination
+     *
+     * @param array $options - The where clause or the binding data etc.
+     *
+     * @return string - html block which can be displayed directly in an html page
+     */
+    public function getReversePagination($options = []): string
     {
-        $per_page  = $args['per_page'] ?: 10;
-        $q['select'] = 'count(*)';
-        $q['orderby'] = '';
-        $q['limit'] = 1;
+        $per_page  = $this->per_page;
 
-        $r = $this->getFirst($q, $data);
-        $total = $r[0];
+        $options['select'] = 'count(*)';
+        $options['orderby'] = '';
+        $options['limit'] = 1;
+
+        $total = $this->getFirst($options)[0];
         $last  = ceil($total / $per_page);
 
         if ($last < 2)
             return '';
 
-        $base_url = $args['base_url'] ?: '';
+        $base_url = $this->base_url;
         $sep = strpos($base_url, '?') === false ? '?' : '&';
         $base_url .= $sep . 'page=';
-        $int_pages = $args['int_pages'] ?: 5;
+        $int_pages = $this->int_pages;
 
         $first = 1;
 

@@ -1,6 +1,9 @@
 {
     "name": "irfantoor/database",
-    "description": "Irfan's Database",
+    "description": "Irfan's Database - A bare-minimum and simple database access",
+    "keywords": [
+        "database", "model", "adapter", "sqlite", "mysql", "simple"
+    ],
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -10,14 +13,15 @@
         }
     ],
     "require": {
-        "php": ">=7.0"
-    },
-    "autoload": {
-        "classmap": [
-            "src/"
-        ]
+        "php": ">=7.3"
     },
     "require-dev": {
-        "irfantoor/test": "^0.4.3"
+        "irfantoor/test": "^0.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "IrfanTOOR\\": "src/",
+            "Tests\\": "tests/classes/"
+        }
     }
 }

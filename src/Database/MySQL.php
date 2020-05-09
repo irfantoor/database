@@ -1,5 +1,12 @@
 <?php
-
+/**
+ * IrfanTOOR\Database\MySQL
+ * php version 7.3
+ *
+ * @package   IrfanTOOR\Database
+ * @author    Irfan TOOR <email@irfantoor.com>
+ * @copyright 2020 Irfan TOOR
+ */
 namespace IrfanTOOR\Database;
 
 use Exception;
@@ -33,26 +40,36 @@ use PDO;
 */
 
 
-class MySQL extends AbstractDatabase
+class MySQL extends AbstractDatabaseEngine implements DatabaseEngineInterface
 {
-    protected $schema;
-    protected $indecies;
-
-    function __construct($connection=[])
+    /**
+     * Connect to a database
+     * 
+     * @param array $connection e.g. $connection = [
+     *                                   'host'     => '127.0.0.1',
+     *                                   'user'     => 'root',
+     *                                   'password' => 'toor',
+     *                                   'db_name'  => 'my_db',
+     *                               ];
+     * @return bool
+     */
+    function connect($connection = []): bool
     {
-        $host = '127.0.0.1';
-        $user = 'root';
-        $password = 'Hello World!';
-        $dbname = 'it_';
+        $this->db = null;
+        
+        $host     = '127.0.0.1';
+        $user     = '';
+        $password = '';
+        $db_name  = '';
 
         extract($connection);
+
         try {
-            # throw new \Exception("mysql:host={$host};dbname={$dbname}; $user, $password");
-            $this->db = new PDO("mysql:host={$host};dbname={$dbname}", $user, $password);
+            $this->db = new PDO("mysql:host={$host};dbname={$db_name}", $user, $password);
         } catch (Exception $e) {
             throw new Exception($e->getMessage());
         }
 
-        $this->_init();
+        return $this->db ? true : false;
     }
 }

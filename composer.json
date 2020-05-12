@@ -16,7 +16,8 @@
         "php": ">=7.3"
     },
     "require-dev": {
-        "irfantoor/test": "^0.6"
+        "irfantoor/test": "^0.6",
+        "squizlabs/php_codesniffer": "^3.5"
     },
     "autoload": {
         "psr-4": {

@@ -1,23 +1,35 @@
 <?php
 /**
- * IrfanTOOR\Database\SQLite
+ * IrfanTOOR\Database\Engine\SQLite
  * php version 7.3
  *
  * @package   IrfanTOOR\Database
  * @author    Irfan TOOR <email@irfantoor.com>
  * @copyright 2020 Irfan TOOR
  */
-namespace IrfanTOOR\Database;
+
+namespace IrfanTOOR\Database\Engine;
 
 use Exception;
+use IrfanTOOR\Database\{
+    AbstractDatabaseEngine,
+    DatabaseEngineInterface
+};
 use PDO;
 
+/**
+ * SQLite Database Engine
+ */
 class SQLite extends AbstractDatabaseEngine implements DatabaseEngineInterface
 {
     /**
      * Connect to a database
      * 
-     * $param  array $connection
+     * @param array $connection Associative array giving connection parameters
+     *              e.g. $connection = [
+     *                  'file'     => $db_storage_path . 'users.sqlite',
+     *              ];
+     *
      * @return bool
      */
     function connect($connection = []): bool
@@ -45,14 +57,16 @@ class SQLite extends AbstractDatabaseEngine implements DatabaseEngineInterface
     /**
      * Insert a record into a connected database, or or updates an existing record
      * 
-     * @param string $table
-     * @param array  $record  associative array of record, values might contain
-     *                        variables of the form :id etc, which are filled using
-     *                        the prepare mechanism, taking data from bind array
-     *                        e.g. ['id' => :id, 'name' => :name ]
-     *                        Note: record must contain all of the required fields
-     * @param array  $bind    associative array e.g. ['id' => $_GET['id'] ?? 1], 
-     *                        see DatabaseEngineInterface::update for bind details
+     * @param string $table  Table name
+     * @param array  $record associative array of record, values might contain
+     *                       variables of the form :id etc, which are filled
+     *                       using the prepare mechanism, taking data from
+     *                       bind array e.g. ['id' => :id, 'name' => :name ]
+     *                       Note: record must contain all of the required
+     *                       fields
+     * @param array  $bind   associative array e.g. ['id' => $_GET['id'] ?? 1], 
+     *                       see DatabaseEngineInterface::update for bind
+     *                       details
      * 
      * @return bool result of the insert/update operation
      */

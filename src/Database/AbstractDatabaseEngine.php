@@ -7,16 +7,16 @@
  * @author    Irfan TOOR <email@irfantoor.com>
  * @copyright 2020 Irfan TOOR
  */
+
 namespace IrfanTOOR\Database;
 
 use Exception;
-use PDO;
 use PDOException;
 
 abstract class AbstractDatabaseEngine
 {
     /**
-     * @var DatabaseEngine
+     * @var DatabaseEngineInterface
      */
     protected $db;
 
@@ -34,9 +34,9 @@ abstract class AbstractDatabaseEngine
     ];
 
     /**
-     * Database Engine Constructor
+     * Construct Engine
      * 
-     * $param  array $connection
+     * @param array $connection Associative array giving connection parameters
      */
     public function __construct(array $connection)
     {
@@ -44,13 +44,7 @@ abstract class AbstractDatabaseEngine
     }    
 
     /**
-     * Executes a raw SQL
-     * 
-     * @param string $sql,
-     * @param array  $bind associative array to bind data in sql while preparing
-     *                     see DatabaseEngineInterface::update
-     *
-     * @return bool|array
+     * @inheritdoc
      */
     public function query(string $sql, array $bind = [])
     {
@@ -62,7 +56,7 @@ abstract class AbstractDatabaseEngine
 
         foreach ($bind as $k => $v) {
             $$k = $v;
-            # todo -- bindParam( ... , PDO::PARAM_INT ...);
+            // todo -- bindParam( ... , PDO::PARAM_INT ...);
             $q->bindParam(':' . $k, $$k); 
         }
 
@@ -70,9 +64,11 @@ abstract class AbstractDatabaseEngine
 
         if (strpos(trim(strtoupper($sql)), 'SELECT') === 0) {
             $rows = [];
-            while($row = $q->fetch()) {
+
+            while ($row = $q->fetch()) {
                 $rows[] = $row;
             }
+
             return $rows;
         }
 
@@ -80,18 +76,7 @@ abstract class AbstractDatabaseEngine
     }
 
     /**
-     * Inserts a record into a connected database
-     * 
-     * @param string $table
-     * @param array  $record  associative array of record, values might contain
-     *                        variables of the form :id etc, which are filled using
-     *                        the prepare mechanism, taking data from bind array
-     *                        e.g. ['id' => :id, 'name' => :name ]
-     *                        Note: record must contain all of the required fields
-     * @param array  $bind    associative array e.g. ['id' => $_GET['id'] ?? 1], 
-     *                        see DatabaseEngineInterface::update for bind details
-     * 
-     * @return bool result of the insert operation
+     * @inheritdoc
      */
     public function insert(string $table, array $record, array $bind = [])
     {
@@ -125,33 +110,7 @@ abstract class AbstractDatabaseEngine
     }
 
     /**
-     * Updates an existing record
-     * 
-     * @param string $table
-     * @param array  $record  associated array only includes data to be updated
-     *                        e.g $record = [
-     *                                'id'       => 1,
-     *                                'user'     => 'root', 
-     *                                'password' => 'toor',
-     *                                'groups'   => 'admin,user,backup',
-     *                                'remote'   => false,
-     *                            ];
-     * @param array  $options contains where, limit or bind etc.
-     *                        e.g $options = [
-     *                                'where' => 'id = :id', <------------+
-     *                                'limit' => 1,                       |
-     *                                'bind' => [                         |
-     *                                    'id' => $_GET['root_id'] ?? 1, -+
-     *                                ]
-     *                            ];
-     *                         If options are not provided following are the assumed defaults:
-     *                         [
-     *                            'where' => '1 = 1',
-     *                            'limit' => 1, // see DatabaseEngineInterface::get
-     *                            'bind'  => [],
-     *                         ]
-     * 
-     * @return bool result of the update operation
+     * @inheritdoc
      */
     public function update(string $table, array $record, array $options = [])
     {
@@ -172,7 +131,7 @@ abstract class AbstractDatabaseEngine
             $sep = ', ';
         }
         
-        $sql .= ' WHERE ' . $where; # ' LIMIT ' . $limit;
+        $sql .= ' WHERE ' . $where; // ' LIMIT ' . $limit;
 
         foreach ($record as $k => $v) {
             if (!isset($bind[$k])) {
@@ -184,18 +143,7 @@ abstract class AbstractDatabaseEngine
     }
 
     /**
-     * Removes a record from database
-     * 
-     * @param string $table
-     * @param array  $options contains where, limit or bind options
-     *                        see DatabaseEngineInterface::update for details
-     *                        If options are not provided following are the assumed defaults:
-     *                            'where' => '1 = 0', # forces that a where be provided
-     *                            'limit' => 1,       # see DatabaseEngineInterface::get
-     *                            'bind'  => [],      # see DatabaseEngineInterface::update
-
-     * 
-     * @return bool result of the update operation
+     * @inheritdoc
      */
     public function remove(string $table, array $options)
     {
@@ -208,29 +156,13 @@ abstract class AbstractDatabaseEngine
         }
 
         $sql =  'DELETE FROM ' . $table;
-        $sql .= ' WHERE ' . $where; # ' LIMIT '    . $limit;
+        $sql .= ' WHERE ' . $where; // ' LIMIT '    . $limit;
 
         return $this->query($sql, $bind);
     }
 
     /**
-     * Retreives list of records
-     * 
-     * @param string $table
-     * @param array  $options associated array containing where, order_by, limit and bind
-     *                        if limit is an int, the records are retrived from start, if its
-     *                        an array it is interpretted like [int $from, int $count], $from
-     *                        indicates number of records to skip and $count indicates number
-     *                        of records to retrieve.
-     *                        e.g. $options = [
-     *                                 'limit' => 1 or 'limit' => [0, 10]
-     *                                 'order_by' => 'ASC id, DESC date',
-     *                                 'where' => 'date < :date', <---------------------------+
-     *                                 'bind' => ['date' => $_POST['date'] ?? date('d-m-Y')], +
-     *                                 # bind: see DatabaseEngineInterface::update
-     *                             ];
-     * 
-     * @return array [rows]   containing the array of rows or empty array otherwise
+     * @inheritdoc
      */
     public function get(string $table, array $options = [])
     {
@@ -243,8 +175,7 @@ abstract class AbstractDatabaseEngine
             $limit = $limit[1];
         }
 
-        $sql =
-            'SELECT ' . $select .
+        $sql = 'SELECT ' . $select .
             ' FROM '  . $table .
             ' WHERE ' . $where .
             ($order_by !== '' ? ' ORDER BY ' . $order_by : '') .
@@ -254,12 +185,7 @@ abstract class AbstractDatabaseEngine
     }
 
     /**
-     * Retreives only the first record
-     * 
-     * @param string $table   name of the table e.g. $table = 'useres';
-     * @param array  $options as explained in DatabaseEngineInterface::get
-     * 
-     * @return array  containing the associative key=>value pairs of the row or null otherwise
+     * @inheritdoc
      */
     public function getFirst(string $table, array $options = [])
     {
@@ -270,12 +196,9 @@ abstract class AbstractDatabaseEngine
     }
 
     /**
-     * Verifies that the database has the record(s)
-     *
-     * @param string $table
-     * @param array $options see DatabaseEngineInterface::update
+     * @inheritdoc
      */
-    public function has(string $table, array $options = [])
+    public function has(string $table, array $options = []): bool
     {
         $r = $this->getFirst($table, $options);
         return $r ? true : false;

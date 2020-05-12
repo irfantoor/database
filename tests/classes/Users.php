@@ -27,8 +27,8 @@ class Users extends Model
         parent::__construct($connection);
     }
 
-    # The above definition is sufficient for development
-    # the following function is for the tests only
+    // The above definition is sufficient for development
+    // the following function is for the tests only
     function getVar($var)
     {
         return $this->$var;

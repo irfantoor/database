@@ -5,379 +5,390 @@ A bare-minimum and simple database access.
 
 ## Creating a Database object
 
-method: new Database(string $engine_name, ?array $connection = null)
+__method__: new Database(string $engine_name, ?array $connection = null)
 
-parameters:
-    string $engine_name - Database engine name e.g. 'sqlite', 'mysql' ...
-    array  $connection  - Connection array containing the parameters required
-                          by the Database Engines like MySQL, SQLite ...
-returns:
+__parameters__:
+ - string $engine_name - Database engine name e.g. 'sqlite', 'mysql' ...
+ - array  $connection  - Connection array containing the parameters required
+ by the Database Engines like MySQL, SQLite ...
+
+__returns__:
     Database object
 
-example:
+__example__:
 ```php
-  $db = new Database('sqlite', ['file' => 'posts.sqlite']);
+$db = new Database('sqlite', ['file' => 'posts.sqlite']);
 ```
 
 ## Connect to a Database Engine
 
-method: connect(array $connection)
+__method__: connect(array $connection)
 
-parameteres:
-    array $connection
+__parameteres__:
+ - array $connection
 
-returns:
-    true  - If the the database engine was successfully connected
-    false - If could not connect to the engine
+__returns__:
+ - true  - If the the database engine was successfully connected
+ - false - If could not connect to the engine
 
-examples:
+__example__:
 ```php
-  $db = new Database('sqlite');
-  $db->connect(['file' => 'posts.sqlite']);
+$db = new Database('sqlite');
+$db->connect(['file' => 'posts.sqlite']);
 
-  # for sql
-  $connection = [
-      'file' => 'storage_path/users.sqlite',
-  ];
+# for sql
+$connection = [
+    'file' => 'storage_path/users.sqlite',
+];
 
-  # for mysql
-  $connection = [
-      'host'     => 'localhost',
-      'user'     => 'root',
-      'password' => 'toor',
-      'db_name'  => 'test',
-  ];
+# for mysql
+$connection = [
+    'host'     => 'localhost',
+    'user'     => 'root',
+    'password' => 'toor',
+    'db_name'  => 'test',
+];
 ```
 
 ## Actions passed to database engine
 
 ### Executes a raw SQL
 
-method: query(string $sql, array $data = [])
+__method__: query(string $sql, array $data = [])
 
-parameters:
-    string $sql,
-    array  $bind associative array to bind data in sql while preparing
+__parameteres__:
+ - string $sql,
+ - array  $bind associative array to bind data in sql while preparing
 
-returns:
-    true or false - if the query is of the type UPDATE, INSERT and DELETE
-    array - returns the result of the SELECT query
+__returns__:
+ - true or false - if the query is of the type UPDATE, INSERT and DELETE
+ - array - returns the result of the SELECT query
 
-example:
+__example__:
 ```php
-    $result = $db->query('SECLECT count(*) from users where valid=true');
+$result = $db->query('SECLECT count(*) from users where valid=true');
 ```
 
 ### Inserts a record into a connected database
 
-method: insert(string $table, array $record, array $bind = [])
+__method__: insert(string $table, array $record, array $bind = [])
 
-parameteres:
-    string $table - The table to be queried
-    array  $record - associative array of record, values might contain
-        variables of the form :id etc, which are filled using
-        the prepare mechanism, taking data from bind array
-        e.g. ['id' => :id, 'name' => :name ]
-        Note: record must contain all of the required fields
-    array  $bind - associative array e.g. ['id' => $_GET['id'] ?? 1]
+__parameteres__:
+ - string $table - The table to be queried
+ - array  $record - associative array of record, values might contain
+ variables of the form :id etc, which are filled using the prepare mechanism,
+ taking data from bind array
+ e.g. ['id' => :id, 'name' => :name ]
+ _Note: record must contain all of the required fields_
+ - array  $bind - associative array e.g. ['id' => $_GET['id'] ?? 1]
 
-returns:
-    true - if the record was inserted
-    false - record was not inserted
+__returns__:
+- true - if the record was inserted
+- false - record was not inserted
 
-example:
+__example__:
 ```php
-    $db->insert('users', ['name' => 'Fabien Potencier', 'email' => 'fabien@symfony.com']);
+$db->insert('users', ['name' => 'Fabien Potencier', 'email' => 'fabien@symfony.com']);
 
-    # or
-    $user = [
-        'name' => 'Irfan TOOR',
-        'email' => 'email@irfantoor.com',
-        'password' => 'its-a-test',
-    ];
+# OR
+$user = [
+    'name' => 'Irfan TOOR',
+    'email' => 'email@irfantoor.com',
+    'password' => 'its-a-test',
+];
 
-    $db->insert('users', $user);
-
-    # NOTE: the query will be prepared and values will be bound automatically
+$db->insert('users', $user);
+# NOTE: the query will be prepared and values will be bound automatically
 ```
 
 ### Updates an existing record
 
-method: update(string $table, array $record, array $options = [])
+__method__: update(string $table, array $record, array $options = [])
 
-parameters:
-    string $table
-    array  $record  associated array only includes data to be updated
-        e.g $record = [
-                'id'       => 1,
-                'user'     => 'root', 
-                'password' => 'toor',
-                'groups'   => 'admin,user,backup',
-                'remote'   => false,
-            ];
-    array  $options contains where, limit or bind etc.
-        e.g $options = [
-                'where' => 'id = :id', <------------+
-                'limit' => 1,                       |
-                'bind' => [                         |
-                    'id' => $_GET['root_id'] ?? 1, -+
-                ]
-            ];
-        If options are not provided following are the assumed defaults:
-            'where' => '1 = 1',
-            'limit' => 1, // see DatabaseEngineInterface::get
-            'bind'  => [],
+__parameteres__:
+ - string $table
+ - array  $record  associated array only includes data to be updated
 
-returns:
-    true  - if successful
-    false - otherwise
+ e.g $record = [
+     'id'       => 1,
+     'user'     => 'root', 
+     'password' => 'toor',
+     'groups'   => 'admin,user,backup',
+     'remote'   => false,
+ ];
+ - array  $options contains where, limit or bind etc.
 
-example:
+ e.g $options = [
+     'where' => 'id = :id', <------------+
+     'limit' => 1,                       |
+     'bind' => [                         |
+         'id' => $_GET['root_id'] ?? 1, -+
+     ]
+ ];
+
+ If options are not provided following are the assumed defaults:
+  - 'where' => '1 = 1',
+  - 'limit' => 1, // see DatabaseEngineInterface::get
+  - 'bind'  => [],
+
+__returns__:
+ - true  - if successful
+ - false - otherwise
+
+__example__:
 ```php
-    $db->update('users', 
-        [
-            'password' => $new_password,
-        ],
-        [
-            'where' => 'email = :email',
-            'bind'  => [
-                'email' => $email
-            ]
+$db->update('users', 
+    [
+        'password' => $new_password,
+    ],
+    [
+        'where' => 'email = :email',
+        'bind'  => [
+            'email' => $email
         ]
-    );
+    ]
+);
 ```
 
 ### Removes a record from database
 
-method: remove(string $table, array $options)
+__method__: remove(string $table, array $options)
 
-parameters:
-    string $table
-    array  $options contains where, limit or bind options
-        If options are not provided following are the assumed defaults:
-        [
-            'where' => '1 = 0', # forces that a where be provided
-            'limit' => 1,       # see DatabaseEngineInterface::get
-            'bind'  => [],      # see DatabaseEngineInterface::update
-        ]
+__parameteres__:
+ - string $table
+ - array  $options contains where, limit or bind options
+ If options are not provided following are the assumed defaults:
 
-returns: 
-    true - if removed successfully
-    false - otherwise
+ [
+     'where' => '1 = 0', # forces that a where be provided
+     'limit' => 1,       # see DatabaseEngineInterface::get
+     'bind'  => [],      # see DatabaseEngineInterface::update
+ ]
 
-example:
+__returns__: 
+ - true - if removed successfully
+ - false - otherwise
+
+__example__:
 ```php
-    $db->remove(
-        'users', 
-        [
-            'where' => 'email = :email', 
-            'bind' => [
-                'email' => $email
-            ]
+$db->remove(
+    'users', 
+    [
+        'where' => 'email = :email', 
+        'bind' => [
+            'email' => $email
         ]
-    );
+    ]
+);
 ```
 
 ### Retreives list of records
 
-method: get(string $table, array $options = [])
+__method__: get(string $table, array $options = [])
 
-parameters:
-    string $table
-    array  $options 
-        associated array containing where, order_by, limit and bind
-        if limit is an int, the records are retrived from start, if its
-        an array it is interpretted like [int $from, int $count], $from
-        indicates number of records to skip and $count indicates number
-        of records to retrieve.
-        e.g. $options = [
-                    'limit' => 1 or 'limit' => [0, 10]
-                    'order_by' => 'ASC id, DESC date',
-                    'where' => 'date < :date', <---------------------------+
-                    'bind' => ['date' => $_POST['date'] ?? date('d-m-Y')], +
-                    # bind: see DatabaseEngineInterface::update
-                ];
- 
-returns:
-    array [row ...] containing the array of rows or null if not found
+__parameteres__:
+ - string $table
+ - array  $options - Associative array containing where, order_by, limit and bind
 
-example:
+If limit is an int, the records are retrived from start, if its an array it is
+interpretted like [int $from, int $count], $from indicates number of records to
+skip and $count indicates number of records to retrieve.
+
+ e.g. $options = [
+     'limit' => 1 or 'limit' => [0, 10]
+     'order_by' => 'ASC id, DESC date',
+     'where' => 'date < :date', <---------------------------+
+     'bind' => ['date' => $_POST['date'] ?? date('d-m-Y')], +
+     # bind: see DatabaseEngineInterface::update
+ ];
+
+__returns__:
+
+array [row ...] containing the array of rows or null if not found
+
+__example__:
 ```php
-  $list = $db->get('posts', [
-      'where' => 'created_at like :date',
-      'order_by' => 'created_at DESC, id DESC',
-      'limit' => [0, 10],
-      'bind' => ['date' => '%' . $_GET['date'] . '%']
-  ]);
+$list = $db->get('posts', [
+    'where' => 'created_at like :date',
+    'order_by' => 'created_at DESC, id DESC',
+    'limit' => [0, 10],
+    'bind' => ['date' => '%' . $_GET['date'] . '%']
+]);
 ```
 
 ### Retreives only the first record
 
-method: getFirst(string $table, array $options = []);
+__method__: getFirst(string $table, array $options = []);
 
-parameters:
-    string $table   name of the table e.g. $table = 'useres';
-    array  $options as explained in DatabaseEngineInterface::get
+__parameteres__:
+ - string $table   name of the table e.g. $table = 'useres';
+ - array  $options as explained in DatabaseEngineInterface::get
 
-returns:
-    array  containing the associative key=>value pairs of the row or null otherwise
+__returns__:
 
-example:
+array  containing the associative key=>value pairs of the row or null otherwise
+
+__example__:
 ```php
-    $last_post = $db->getFirst('posts', ['orderby' => 'date DESC']);
+$last_post = $db->getFirst('posts', ['orderby' => 'date DESC']);
 ```
 
 ## Database Models
 
-NOTE: Currently Models only supports SQLite db
+__NOTE__: _Currently Models only supports SQLite db_
 
 Models use the database and calls as explained above. Since a model is tied to a
-table, therefore the same calls apply to a model except that the first prameter of
+table, therefore the same calls (of database) apply to a model except that the first prameter of
 table_name is not present in the methods.
 
 ### Creating a model
 
-example: Models\Users.php
+__example__: Models\Users.php
 ```php
 <?php
-    namespace Models\Users;
+namespace Models\Users;
 
-    use IrfanTOOR\Database\Model;
+use IrfanTOOR\Database\Model;
 
-    class Users extends Model
+class Users extends Model
+{
+    function __construct($connection)
     {
-        function __construct($connection)
-        {
-            # schema needs to be defined
-            $this->schema = [
-                'id'         => 'INTEGER PRIMARY KEY',
+        # schema needs to be defined
+        $this->schema = [
+            'id'         => 'INTEGER PRIMARY KEY',
 
-                'name'       => 'NOT NULL',
-                'email'      => 'COLLATE NOCASE',
-                'password'   => 'NOT NULL',
-                'token',
-                'validated'  => 'BOOL DEFAULT false',
+            'name'       => 'NOT NULL',
+            'email'      => 'COLLATE NOCASE',
+            'password'   => 'NOT NULL',
+            'token',
+            'validated'  => 'BOOL DEFAULT false',
 
-                'created_on' => 'DATETIME DEFAULT CURRENT_TIMESTAMP',
-                'updated_on' => 'INTEGER'
-            ];
+            'created_on' => 'DATETIME DEFAULT CURRENT_TIMESTAMP',
+            'updated_on' => 'INTEGER'
+        ];
 
-            # indices need to be defined
-            $this->indices = [
-                ['index'  => 'name'],
-                ['unique' => 'email'],
-            ];
+        # indices need to be defined
+        $this->indices = [
+            ['index'  => 'name'],
+            ['unique' => 'email'],
+        ];
 
-            # call the constructor with the $connection
-            parent::__construct($connection);
-        }
+        # call the constructor with the $connection
+        parent::__construct($connection);
     }
+}
 ```
 
 ### Model constructor
 
-method: $users = new Users(array $connection)
+__method__: $users = new Users(array $connection)
 
-parameters:
-    array $connection - ['file' => $db_path . 'users.sqlite', 'table' => 'users']
+__parameteres__:
+ - array $connection - ['file' => $db_path . 'users.sqlite', 'table' => 'users']
 
-returns:
-    Users model object
+__returns__:
 
-example:
+Users model object
+
+__example__:
 ```php
-    use Model\Users;
+use Model\Users;
 
-    $connection = [
-        'file' => $db_path . 'users.sqlite',
-        'table' => 'users'
-    ];
+$connection = [
+    'file' => $db_path . 'users.sqlite',
+    'table' => 'users'
+];
 
-    # NOTE: If table name is not provided Model name e.g. 'Users' will be converted
-    #       to lowercase i.e. 'users' and will be used as table name.
+# NOTE: If table name is not provided Model name e.g. 'Users' will be converted
+#       to lowercase i.e. 'users' and will be used as table name.
 
-    $users = new Users($connection);
+$users = new Users($connection);
 ```
 
 ### Retrieves the name of the database file
 
-method: getDatabaseFile()
+__method__: getDatabaseFile()
 
-parameters: none
+__parameteres__: none
 
-returns:
-    string - pathname of the sqlite file the model is connected to
+__returns__:
 
-example:
+string - pathname of the sqlite file the model is connected to
+
+__example__:
 ```php
-    $file =  $users->getDatabaseFile();
+$file =  $users->getDatabaseFile();
 ```
 
 ### Prepares a schema of the datbase from model definition and returns it
 
-method: prepareSchema()
+__method__: prepareSchema()
 
-parameters: none
+__parameteres__: none
 
-returns:
-    string - Raw SQL schema, prepared from the definition of schema and indices,
-             which were provided while wrinting the model (ref: Creating a Model),
-             is returned. This schema can be used to create the sqlite file manually.
+__returns__:
 
-example:
+ string - Raw SQL schema, prepared from the definition of schema and indices,
+ which were provided while wrinting the model (ref: Creating a Model), is returned.
+ This schema can be used to create the sqlite file manually.
+
+__example__:
 ```php
-    $schema = $users->prepareSchema();
-    echo $schema;
+$schema = $users->prepareSchema();
+echo $schema;
 ```
 
 ### Deploy the schema
 
-method: deploySchema(string $schema)
+__method__: deploySchema(string $schema)
 
-parameters:
-    string $schema - The schema to be deployed to the connected file
+__parameteres__:
+ - string $schema - The schema to be deployed to the connected file
 
-throws:
-    Exception - in case of error
+__throws__: Exception - in case of error
 
-example:
+__returns__: nothing
+
+__example__:
 ```php
-    $file = $sb_path . 'users.sqlite';
-    
-    # create a file and deploy the schema if it does not exist
-    if (!file_exists($file)) {
-        file_put_contents($file, '');
-        $users = new Users(['file' => $file]);
-        $schema = $users->prepareSchema();
-        $users->deploySchema($schema);
-    }
+$file = $sb_path . 'users.sqlite';
+
+# create a file and deploy the schema if it does not exist
+if (!file_exists($file)) {
+    file_put_contents($file, '');
+    $users = new Users(['file' => $file]);
+    $schema = $users->prepareSchema();
+    $users->deploySchema($schema);
+}
 ```
 
 ### Insert a record
 
-method: insert(array $record, array $bind = [])
+__method__: insert(array $record, array $bind = [])
 
-parameters:
-    array  $record  associative array of record, values might contain
-                    variables of the form :id etc, which are filled using
-                    the prepare mechanism, taking data from bind array
-                    e.g. ['id' => :id, 'name' => :name ]
-                    Note: record must contain all of the required fields
-    array $bind - The data we need to bind to the :placeholders in $record
+__parameteres__:
+ - array  $record Asociative array of record, 
 
-returns:
-    true - if inserted the record successfully
-    false - otherwise
+ values might contain variables of the form :id etc, which are filled using the
+ prepare mechanism, taking data from bind array e.g. ['id' => :id, 'name' => :name ]
+ _Note: record must contain all of the required fields_
 
-example:
+ - array $bind - The data we need to bind to the :placeholders in $record
+
+__returns__:
+ - true - if inserted the record successfully
+ - false - otherwise
+
+__example__:
 ```php
-    $user = [
-        'name' => 'Irfan TOOR',
-        'email' => 'email@irfantoor.com',
-        'password' => 'some-password',
-    ];
+$user = [
+    'name' => 'Irfan TOOR',
+    'email' => 'email@irfantoor.com',
+    'password' => 'some-password',
+];
 
-    $users->insert($user);
+$users->insert($user);
 ```
 
 ### Insert or update a record
@@ -385,247 +396,143 @@ example:
 This method inserts the record if the record deoes not exist, or updates the
 existing one.
 
-method: insertOrUpdate(array $record, array $bind = [])
+__method__: insertOrUpdate(array $record, array $bind = [])
 
-parameters:
-    array $record - Associative array represnting one record
-    array $bind - The data we need to bind to the :placeholders in $record
+__parameteres__:
+ - array $record - Associative array represnting one record
+ - array $bind - The data we need to bind to the :placeholders in $record
 
-returns:
-    true - if inserted or updated the record successfully
-    false - otherwise
+__returns__:
+ - true - if inserted or updated the record successfully
+ - false - otherwise
 
-example:
+__example__:
 ```php
-    $user['password'] = 'password-to-be-updated';
-    $users->insertOrUpdate($user); # updates the record of previous example
+$user['password'] = 'password-to-be-updated';
+$users->insertOrUpdate($user); # updates the record of previous example
 
-   $user = [
-        'name' => 'Some User',
-        'email' => 'email@example.com',
-        'password' => 'some-password',
-    ];
+$user = [
+    'name' => 'Some User',
+    'email' => 'email@example.com',
+    'password' => 'some-password',
+];
 
-    $users->insertOrUpdate($user); # inserts the record now
+$users->insertOrUpdate($user); # inserts the record now
 ```
 
 ### Update an existing record
 
-method: update(array $record, array $options = [])
+__method__: update(array $record, array $options = [])
 
-parameters:
-    array $record - Associative array represnting one record
-    array $options - The where clause or the binding data etc.
+__parameteres__:
+ - array $record - Associative array represnting one record
+ - array $options - The where clause or the binding data etc.
 
-returns:
-    true - if updated the record successfully
-    false - otherwise
+__returns__:
+ - true - if updated the record successfully
+ - false - otherwise
 
-example:
+__example__:
 ```php
-    $email = 'email@example.com';
+$email = 'email@example.com';
 
-    $users->update(
-        # only the record data which we need to modify
-        [
-            'password' => 'password',
-        ],
-        # options
-        [
-            'where' => 'email = :email',
-            'bind' => [
-                'email' => $email
-            ]
-        ]
-    );
-```
-
-### Remove an existing record
-
-method: remove(array $options)
-
-parameters:
-    array $options - The where clause or the binding data etc.
-
-returns:
-    true - if removed the record successfully
-    false - otherwise
-
-example:
-```php
-    $users->remove([
+$users->update(
+    # only the record data which we need to modify
+    [
+        'password' => 'password',
+    ],
+    # options
+    [
         'where' => 'email = :email',
         'bind' => [
             'email' => $email
         ]
-    ]);
+    ]
+);
+```
+
+### Remove an existing record
+
+__method__: remove(array $options)
+
+__parameteres__:
+ - array $options - The where clause or the binding data etc.
+
+__returns__:
+ - true - if removed the record successfully
+ - false - otherwise
+
+__example__:
+```php
+$users->remove([
+    'where' => 'email = :email',
+    'bind' => [
+        'email' => $email
+    ]
+]);
 ```
 
 ### Retrieve a list of records
 
-method: get(array $options = [])
+__method__: get(array $options = [])
 
-parameters:
-    array $options - The where clause or the binding data etc.
+__parameteres__:
+ - array $options - The where clause or the binding data etc.
 
-returns:
-    array or records or null
+__returns__:
+ array or records or null
 
-example:
+__example__:
 ```php
-    $list = $users->get();
-    $list = $users->get(['where' => 'validated = true']);
-    $list = $posts->get(
-        [
-            'where' => 'created_at like :date',
-            'order_by' => 'created_at DESC, id DESC',
-            'limit' => [0, 10],
-            'bind' => ['date' => '%' . $_GET['date'] . '%']
-        ]
-    );
+$list = $users->get();
+$list = $users->get(['where' => 'validated = true']);
+$list = $posts->get(
+    [
+        'where' => 'created_at like :date',
+        'order_by' => 'created_at DESC, id DESC',
+        'limit' => [0, 10],
+        'bind' => ['date' => '%' . $_GET['date'] . '%']
+    ]
+);
 ```
 
 ### Retrieve the first record
 
-method: getFirst(array $options = [])
+__method__: getFirst(array $options = [])
 
-parameters:
-    array $options - The where clause or the binding data etc.
-                     this might include the order_by and limit parameters
+__parameteres__:
+ - array $options - The where clause or the binding data etc. this might include
+ the order_by and limit parameters
 
-returns:
-    array - an associative array containing the record
-    null - if could not find one
+__returns__:
+ - array - an associative array containing the record
+ - null - if could not find one
 
-example:
+__example__:
 ```php
-    $user = $users->getFirst();
-    $last_post = $posts->getFirst(['orderby' => 'date DESC']);
+$user = $users->getFirst();
+$last_post = $posts->getFirst(['orderby' => 'date DESC']);
 ```
 
 ### Verify if a record exists
 
-method: has($options = [])
+__method__: has($options = [])
 
-parameters:
-    array $options - The where clause or the binding data etc.
+__parameteres__:
+ - array $options - The where clause or the binding data etc.
 
-returns:
-    true - if record exists
-    false - otherwise
+__returns__:
+ - true - if record exists
+ - false - otherwise
 
-example:
+__example__:
 ```php
-    $users->has(
-        [
-            'where' => 'email = :email',
-            'bind' => [
-                'email' =>$email,
-            ]
+$users->has(
+    [
+        'where' => 'email = :email',
+        'bind' => [
+            'email' =>$email,
         ]
-    );
+    ]
+);
 ```
-
-## Model Pagination
-
-### Set the base url
-
-method: setBaseUrl(string $url)
-
-parameters:
-    string url - base url to be used while doing the pagination
-                 default is '/'
-
-example:
-```php
-    $users->setBaseUrl('/users//');
-```
-
-### Set the number of entries per page
-
-method: setPerPage(int $per_page)
-
-parameters:
-    int $per_page - number of entries to be displayed on a page
-                    default is 10
-
-example:
-```php
-    $per_page = 100;
-    $users->setPerPage($per_page);
-```
-
-### Number of intermediate pages
-
-method: setIntermediatePages(int $int_pages)
-
-parameters:
-    int $int_page - number of intermediate pages to be displayed in the
-                    pagination bar, default is 5 (should always be odd)
-
-example:
-```php
-    $users->setIntermediatePages(7);
-```
-
-### Retrieve the pagination
-
-method: getPagination($options = [])
-
-parameters:
-    array $options - The where clause or the binding data etc.
-
-returns:
-    string - html block which can be displayed directly in an html page
-
-example:
-```php
-    $page = 1;
-    $from = ($page - 1) * $per_page;
-
-    $options = [
-        'limit' => [$from, $per_page]
-        'where' => 'validated = true'
-    ];
-
-    $list = $users->get($options);
-    # you can use templating to display this list
-
-    $pagination = $users->getPagination($options);
-    # this can directly displyed
-
-    echo $pagination;
-```
-
-### Retrieve the reverse pagination
-
-Returns the pagination in reverse order. It was created to make a page number
-show always the same content, despite newer entries being added.
-
-method: getReversePagination($options = [])
-
-parameters:
-    array $options - The where clause or the binding data etc.
-
-returns:
-    string - html block which can be displayed directly in an html page
-
-example:
-```php
-    $page = 1;
-    $from = ($page - 1) * $per_page;
-
-    $options = [
-        'limit' => [$from, $per_page]
-        'where' => 'validated = true'
-    ];
-
-    $list = $users->get($options);
-    # you can use templating to display this list
-
-    $pagination = $users->getReversePagination($options);
-    # this can directly displyed
-
-    echo $pagination;
-```
-}

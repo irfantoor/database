@@ -7,16 +7,15 @@
  * @author    Irfan TOOR <email@irfantoor.com>
  * @copyright 2020 Irfan TOOR
  */
-use IrfanTOOR\Test;
 
+use IrfanTOOR\Test;
 use IrfanTOOR\Database;
 use IrfanTOOR\Database\{
     DatabaseEngineInterface,
     AbstractDatabaseEngine,
-    SQLite,
-    MySQL
+    Engine\SQLite,
+    Engine\MySQL
 };
-
 use Tests\Users;
 
 class DatabaseTest extends Test
@@ -25,12 +24,12 @@ class DatabaseTest extends Test
     {
         $file = $this->getFile();
 
-        # unlink the existing file
+        // unlink the existing file
         if (file_exists($file)) {
             unlink($file);
         }
 
-        # reset the file
+        // reset the file
         file_put_contents($file, '');
 
         $users = $this->getUsers();
@@ -46,9 +45,11 @@ class DatabaseTest extends Test
 
     public function getUsers()
     {
-        return new Users([
+        return new Users(
+            [
             'file' => $this->getFile()
-        ]);
+            ]
+        );
     }
 
     public function connection($engine)
@@ -155,7 +156,7 @@ class DatabaseTest extends Test
             $expecting1 = "SQLSTATE[HY000] [1045] Access denied for user 'root'@'localhost' (using password: YES)";
             $expecting2 = "SQLSTATE[HY000] [2002] Connection refused";
 
-            # tried to create a MySQL instance
+            // tried to create a MySQL instance
             $this->assertTrue($expecting1 === $msg || $expecting2 === $msg);
         }
     }
@@ -164,7 +165,7 @@ class DatabaseTest extends Test
     {
         $db = new Database('sqlite', $this->connection('sqlite'));
 
-        # no data has been inserted so far!
+        // no data has been inserted so far!
         $this->assertFalse(
             $db->has(
                 'users', 
@@ -175,7 +176,7 @@ class DatabaseTest extends Test
             )
         );
 
-        # No record in the database
+        // No record in the database
         $this->assertFalse($db->has('users'));
 
         $db->insert(
@@ -197,7 +198,7 @@ class DatabaseTest extends Test
             )
         );
 
-        # database has records!
+        // database has records!
         $this->assertTrue($db->has('users'));
     }
 
@@ -205,7 +206,7 @@ class DatabaseTest extends Test
     {
         $db = new Database('sqlite', $this->connection('sqlite'));
 
-        # insert user
+        // insert user
         $db->insert(
             'users',
             [
@@ -215,7 +216,7 @@ class DatabaseTest extends Test
             ]
         );
 
-        # insert another user
+        // insert another user
         $db->insert(
             'users',
             [
@@ -225,7 +226,7 @@ class DatabaseTest extends Test
             ]
         );
 
-        # assert that the user exists now
+        // assert that the user exists now
         $this->assertTrue(
             $db->has(
                 'users', 
@@ -237,7 +238,7 @@ class DatabaseTest extends Test
         );
 
         $this->assertException(
-            function () use($db) {
+            function () use ($db) {
                 $db->insert(
                     'users',
                     [
@@ -254,10 +255,10 @@ class DatabaseTest extends Test
     {
         $db = new Database('sqlite', $this->connection('sqlite'));
 
-        # get the list of users
+        // get the list of users
         $list = $db->get('users');
 
-        # assert if count and the users name are as expected
+        // assert if count and the users name are as expected
         $this->assertEquals(3, count($list));
         $this->assertEquals('user-1', $list[0]['name']);
         $this->assertEquals('user-2', $list[1]['name']);
@@ -268,7 +269,7 @@ class DatabaseTest extends Test
     {
         $db = new Database('sqlite', $this->connection('sqlite'));
 
-        # user with id 3 does not exist
+        // user with id 3 does not exist
         $user = $db->getFirst(
             'users',
             [
@@ -277,13 +278,13 @@ class DatabaseTest extends Test
             ]
         );
 
-        # assert no user exists!
+        // assert no user exists!
         $this->assertNull($user);
 
-        # get the first user in reverse order
+        // get the first user in reverse order
         $user = $db->getFirst('users', ['order_by' => 'id desc']);
 
-        # assert that we have a user and assert his expected name
+        // assert that we have a user and assert his expected name
         $this->assertNotNull($user);
         $this->assertEquals('user-3', $user['name']);
     }
@@ -293,24 +294,24 @@ class DatabaseTest extends Test
     {
         $db = new Database('sqlite', $this->connection('sqlite'));
 
-        # id 1 exists
+        // id 1 exists
         $this->assertTrue($db->has('users', ['where' => 'id = 1']));
 
-        # get this record
+        // get this record
         $user = $db->getFirst('users', ['where' => 'id = 1']);
 
-        # assert expected values
+        // assert expected values
         $this->assertEquals('user-1',   $user['name']);
         $this->assertEquals('email1',   $user['email']);
         $this->assertEquals('password', $user['password']);
 
-        # update password
+        // update password
         $db->update(
             'users',
             [
                 'id' => 4,
                 'password' => 'updated password'
-            ], # record
+            ], // record
             [
                 'where' => 'id = :id',
                 'bind'  => [
@@ -325,10 +326,10 @@ class DatabaseTest extends Test
         $this->assertEquals('email1', $user['email']);
         $this->assertEquals('updated password', $user['password']);
 
-        # get the record
+        // get the record
         $user = $db->getFirst('users', ['where' => 'id = 4']);
 
-        # assert expected values
+        // assert expected values
         $this->assertEquals('user-1', $user['name']);
         $this->assertEquals('email1', $user['email']);
         $this->assertEquals('updated password', $user['password']);
@@ -338,12 +339,12 @@ class DatabaseTest extends Test
     {
         $db = new Database('sqlite', $this->connection('sqlite'));
 
-        # id 1 does not exists, updated in a previous test
+        // id 1 does not exists, updated in a previous test
         $this->assertFalse(
             $db->has('users', ['where' => 'id = 1'])
         );
 
-        # it will do an insert as id 1 does not exists
+        // it will do an insert as id 1 does not exists
         $result = $db->insertOrUpdate(
             'users', 
             [
@@ -356,19 +357,19 @@ class DatabaseTest extends Test
 
         $this->assertTrue($result);
         
-        # id 1 is inserted as it exists now
+        // id 1 is inserted as it exists now
         $this->assertTrue(
             $db->has('users', ['where' => 'id = 1'])
         );
 
-        # assert the expected values
+        // assert the expected values
         $user = $db->getFirst('users', ['where' => "id = '1'"]);
 
         $this->assertEquals('inserted user', $user['name']);
         $this->assertEquals('inserted email', $user['email']);
         $this->assertEquals('inserted password', $user['password']);
 
-        # it will update as id 1 already exists
+        // it will update as id 1 already exists
         $result = $db->insertOrUpdate(
             'users',
             [
@@ -381,7 +382,7 @@ class DatabaseTest extends Test
 
         $this->assertTrue($result);
 
-        # assert the expected values
+        // assert the expected values
         $user = $db->getFirst('users', ['where' => 'id = 1']);
 
         $this->assertEquals('updated user',     $user['name']);
@@ -419,7 +420,7 @@ class DatabaseTest extends Test
             'users',
             [
                 'where' => 'id < :max_id',
-                'select' => 'count(*)',         # order is not important
+                'select' => 'count(*)',         // order is not important
                 'bind' => [
                     'max_id' => 10,
                 ]

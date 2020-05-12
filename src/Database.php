@@ -7,13 +7,14 @@
  * @author    Irfan TOOR <email@irfantoor.com>
  * @copyright 2020 Irfan TOOR
  */
+
 namespace IrfanTOOR;
 
 use Exception;
 use IrfanTOOR\Database\{
     DatabaseEngineInterface,
-    MySQL,
-    SQLite
+    Engine\MySQL,
+    Engine\SQLite
 };
 
 /**
@@ -28,7 +29,10 @@ use IrfanTOOR\Database\{
  *   $result = $db->query('SELECT count(*) from users');
  *   $db->insert('users', $user);
  *   $user['email'] = 'new@example.com'
- *   $db->update('users', $user, ['where' => 'name = :name', 'bind' => ['name' => $name]]);
+ *   $db->update('users', $user, [
+ *      'where' => 'name = :name', 
+ *      'bind' => ['name' => $name]
+ *   ]);
  *   $db->remove('users', ['where' => 'name = :name', 'bind' => ['name' => $name]]);
  *
  *   $list = $db->get('Posts', [
@@ -61,7 +65,7 @@ class Database
      *
      * @var const
      */
-    const VERSION = "0.3.0"; // @@VERSION
+    const VERSION = "0.3.1"; // @@VERSION
 
     /**
      * Engine name
@@ -81,7 +85,7 @@ class Database
      * @var array
      */
     static protected $available_engines = [
-        # todo -- add other engines (couchebase, MS-SQL, oracle ...)
+        // todo -- add other engines (couchebase, MS-SQL, oracle ...)
         'sqlite', 'mysql',
     ];
     
@@ -108,23 +112,22 @@ class Database
     /**
      * Connect to a Database Engine
      *
-     * @param  array  $connection  ['host' => 'localhost', 'user' => 'root', 'password' => 'toor', 'db_name' => 'main_db']
-     *                             ['file' => '~/db/users.sqlite']
+     * @param array $connection - Associative array of connection parameters
      * 
-     * @return bool                result indicates if the connect operation was successful
+     * @return bool Result indicates if the connect operation was successful
      */
     public function connect(array $connection): bool
     {
         switch (strtolower($this->engine_name)) {
-            case 'sqlite':
-                $this->engine = new SQLite($connection);
-                break;
+        case 'sqlite':
+            $this->engine = new SQLite($connection);
+            break;
 
-            case 'mysql':
-                $this->engine = new MySQL($connection);
-                break;
+        case 'mysql':
+            $this->engine = new MySQL($connection);
+            break;
 
-            default:
+        default:
         }
 
         return $this->engine ? true : false;
@@ -143,8 +146,8 @@ class Database
     /**
      * Passes all of the calls to Database Engine
      * 
-     * @param string
-     * @param array
+     * @param string $method Method
+     * @param array  $args   Arguments to be passed
      * 
      * @return mixed
      */

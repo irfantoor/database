@@ -56,7 +56,7 @@ $connection = [
 
 ### Executes a raw SQL
 
-__method__: query(string $sql, array $data = [])
+__method__: query(string $sql, array $data = \[])
 
 __parameteres__:
  - string $sql,
@@ -74,16 +74,17 @@ $result = $db->query('SECLECT count(*) from users where valid=true');
 
 ### Inserts a record into a connected database
 
-__method__: insert(string $table, array $record, array $bind = [])
+__method__: insert(string $table, array $record, array $bind = \[])
 
 __parameteres__:
  - string $table - The table to be queried
- - array  $record - associative array of record, values might contain
- variables of the form :id etc, which are filled using the prepare mechanism,
- taking data from bind array
- e.g. ['id' => :id, 'name' => :name ]
+ - array  $record - associative array of record
+```
+Values might contain variables of the form :id etc, which are filled using the prepare 
+mechanism, taking data from bind array e.g. ['id' => :id, 'name' => :name ]
+```
  _Note: record must contain all of the required fields_
- - array  $bind - associative array e.g. ['id' => $_GET['id'] ?? 1]
+ - array  $bind - associative array e.g. ```['id' => $_GET['id'] ?? 1]```
 
 __returns__:
 - true - if the record was inserted
@@ -107,21 +108,22 @@ $db->insert('users', $user);
 
 ### Updates an existing record
 
-__method__: update(string $table, array $record, array $options = [])
+__method__: update(string $table, array $record, array $options = \[])
 
 __parameteres__:
  - string $table
  - array  $record  associated array only includes data to be updated
-
- e.g $record = [
-     'id'       => 1,
-     'user'     => 'root', 
-     'password' => 'toor',
-     'groups'   => 'admin,user,backup',
-     'remote'   => false,
- ];
+```
+e.g $record = [
+  'id'       => 1,
+  'user'     => 'root',
+  'password' => 'toor',
+  'groups'   => 'admin,user,backup',
+  'remote'   => false,
+];
+``` 
  - array  $options contains where, limit or bind etc.
-
+```
  e.g $options = [
      'where' => 'id = :id', <------------+
      'limit' => 1,                       |
@@ -129,11 +131,11 @@ __parameteres__:
          'id' => $_GET['root_id'] ?? 1, -+
      ]
  ];
-
+```
  If options are not provided following are the assumed defaults:
   - 'where' => '1 = 1',
   - 'limit' => 1, // see DatabaseEngineInterface::get
-  - 'bind'  => [],
+  - 'bind'  => \[],
 
 __returns__:
  - true  - if successful
@@ -163,13 +165,13 @@ __parameteres__:
  - string $table
  - array  $options contains where, limit or bind options
  If options are not provided following are the assumed defaults:
-
+```
  [
      'where' => '1 = 0', # forces that a where be provided
      'limit' => 1,       # see DatabaseEngineInterface::get
      'bind'  => [],      # see DatabaseEngineInterface::update
  ]
-
+```
 __returns__: 
  - true - if removed successfully
  - false - otherwise
@@ -190,27 +192,27 @@ $db->remove(
 
 ### Retreives list of records
 
-__method__: get(string $table, array $options = [])
+__method__: get(string $table, array $options = \[])
 
 __parameteres__:
  - string $table
  - array  $options - Associative array containing where, order_by, limit and bind
 
 If limit is an int, the records are retrived from start, if its an array it is
-interpretted like [int $from, int $count], $from indicates number of records to
+interpretted like \[int $from, int $count], $from indicates number of records to
 skip and $count indicates number of records to retrieve.
-
- e.g. $options = [
-     'limit' => 1 or 'limit' => [0, 10]
-     'order_by' => 'ASC id, DESC date',
-     'where' => 'date < :date', <---------------------------+
-     'bind' => ['date' => $_POST['date'] ?? date('d-m-Y')], +
-     # bind: see DatabaseEngineInterface::update
- ];
-
+```
+e.g. $options = [
+  'limit' => 1 or 'limit' => [0, 10]
+  'order_by' => 'ASC id, DESC date',
+  'where' => 'date < :date', <---------------------------+
+  'bind' => ['date' => $_POST['date'] ?? date('d-m-Y')], +
+  # bind: see DatabaseEngineInterface::update
+];
+```
 __returns__:
 
-array [row ...] containing the array of rows or null if not found
+array \[row ...] containing the array of rows or null if not found
 
 __example__:
 ```php
@@ -225,7 +227,7 @@ $list = $db->get('posts', [
 
 ### Retreives only the first record
 
-__method__: getFirst(string $table, array $options = []);
+__method__: getFirst(string $table, array $options = \[]);
 
 __parameteres__:
  - string $table   name of the table e.g. $table = 'useres';
@@ -293,7 +295,7 @@ class Users extends Model
 __method__: $users = new Users(array $connection)
 
 __parameteres__:
- - array $connection - ['file' => $db_path . 'users.sqlite', 'table' => 'users']
+ - array $connection - \['file' => $db_path . 'users.sqlite', 'table' => 'users']
 
 __returns__:
 
@@ -377,13 +379,13 @@ if (!file_exists($file)) {
 
 ### Insert a record
 
-__method__: insert(array $record, array $bind = [])
+__method__: insert(array $record, array $bind = \[])
 
 __parameteres__:
  - array  $record Asociative array of record, 
 
  values might contain variables of the form :id etc, which are filled using the
- prepare mechanism, taking data from bind array e.g. ['id' => :id, 'name' => :name ]
+ prepare mechanism, taking data from bind array e.g. \['id' => :id, 'name' => :name ]
  _Note: record must contain all of the required fields_
 
  - array $bind - The data we need to bind to the :placeholders in $record
@@ -409,7 +411,7 @@ $users->insert($user);
 This method inserts the record if the record deoes not exist, or updates the
 existing one.
 
-__method__: insertOrUpdate(array $record, array $bind = [])
+__method__: insertOrUpdate(array $record, array $bind = \[])
 
 __parameteres__:
  - array $record - Associative array represnting one record
@@ -436,7 +438,7 @@ $users->insertOrUpdate($user); # inserts the record now
 
 ### Update an existing record
 
-__method__: update(array $record, array $options = [])
+__method__: update(array $record, array $options = \[])
 
 __parameteres__:
  - array $record - Associative array represnting one record
@@ -490,7 +492,7 @@ $users->remove([
 
 ### Retrieve a list of records
 
-__method__: get(array $options = [])
+__method__: get(array $options = \[])
 
 __parameteres__:
  - array $options - The where clause or the binding data etc.
@@ -515,7 +517,7 @@ $list = $posts->get(
 
 ### Retrieve the first record
 
-__method__: getFirst(array $options = [])
+__method__: getFirst(array $options = \[])
 
 __parameteres__:
  - array $options - The where clause or the binding data etc. this might include
@@ -534,7 +536,7 @@ $last_post = $posts->getFirst(['orderby' => 'date DESC']);
 
 ### Verify if a record exists
 
-__method__: has($options = [])
+__method__: has($options = \[])
 
 __parameteres__:
  - array $options - The where clause or the binding data etc.

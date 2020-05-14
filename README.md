@@ -33,6 +33,7 @@ __returns__:
 
 __example__:
 ```php
+<?php
 $db = new Database('sqlite');
 $db->connect(['file' => 'posts.sqlite']);
 
@@ -66,6 +67,7 @@ __returns__:
 
 __example__:
 ```php
+<?php
 $result = $db->query('SECLECT count(*) from users where valid=true');
 ```
 
@@ -88,6 +90,7 @@ __returns__:
 
 __example__:
 ```php
+<?php
 $db->insert('users', ['name' => 'Fabien Potencier', 'email' => 'fabien@symfony.com']);
 
 # OR
@@ -137,6 +140,7 @@ __returns__:
 
 __example__:
 ```php
+<?php
 $db->update('users', 
     [
         'password' => $new_password,
@@ -171,6 +175,7 @@ __returns__:
 
 __example__:
 ```php
+<?php
 $db->remove(
     'users', 
     [
@@ -208,6 +213,7 @@ array [row ...] containing the array of rows or null if not found
 
 __example__:
 ```php
+<?php
 $list = $db->get('posts', [
     'where' => 'created_at like :date',
     'order_by' => 'created_at DESC, id DESC',
@@ -230,6 +236,7 @@ array  containing the associative key=>value pairs of the row or null otherwise
 
 __example__:
 ```php
+<?php
 $last_post = $db->getFirst('posts', ['orderby' => 'date DESC']);
 ```
 
@@ -293,6 +300,7 @@ Users model object
 
 __example__:
 ```php
+<?php
 use Model\Users;
 
 $connection = [
@@ -318,6 +326,7 @@ string - pathname of the sqlite file the model is connected to
 
 __example__:
 ```php
+<?php
 $file =  $users->getDatabaseFile();
 ```
 
@@ -335,6 +344,7 @@ __returns__:
 
 __example__:
 ```php
+<?php
 $schema = $users->prepareSchema();
 echo $schema;
 ```
@@ -352,6 +362,7 @@ __returns__: nothing
 
 __example__:
 ```php
+<?php
 $file = $sb_path . 'users.sqlite';
 
 # create a file and deploy the schema if it does not exist
@@ -382,6 +393,7 @@ __returns__:
 
 __example__:
 ```php
+<?php
 $user = [
     'name' => 'Irfan TOOR',
     'email' => 'email@irfantoor.com',
@@ -408,6 +420,7 @@ __returns__:
 
 __example__:
 ```php
+<?php
 $user['password'] = 'password-to-be-updated';
 $users->insertOrUpdate($user); # updates the record of previous example
 
@@ -434,6 +447,7 @@ __returns__:
 
 __example__:
 ```php
+<?php
 $email = 'email@example.com';
 
 $users->update(
@@ -464,6 +478,7 @@ __returns__:
 
 __example__:
 ```php
+<?php
 $users->remove([
     'where' => 'email = :email',
     'bind' => [
@@ -484,6 +499,7 @@ __returns__:
 
 __example__:
 ```php
+<?php
 $list = $users->get();
 $list = $users->get(['where' => 'validated = true']);
 $list = $posts->get(
@@ -510,6 +526,7 @@ __returns__:
 
 __example__:
 ```php
+<?php
 $user = $users->getFirst();
 $last_post = $posts->getFirst(['orderby' => 'date DESC']);
 ```
@@ -527,6 +544,7 @@ __returns__:
 
 __example__:
 ```php
+<?php
 $users->has(
     [
         'where' => 'email = :email',

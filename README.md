@@ -17,6 +17,7 @@ __returns__:
 
 __example__:
 ```php
+<?php
 $db = new Database('sqlite', ['file' => 'posts.sqlite']);
 ```
 

@@ -5,10 +5,9 @@ A bare-minimum and simple database access.
 
 ## Creating a Database object
 
-__method__: new Database(string $engine_name, ?array $connection = null)
+__method__: new Database(?array $connection = null)
 
 __parameters__:
- - string $engine_name - Database engine name e.g. 'sqlite', 'mysql' ...
  - array  $connection  - Connection array containing the parameters required
  by the Database Engines like MySQL, SQLite ...
 
@@ -18,7 +17,12 @@ __returns__:
 __example__:
 ```php
 <?php
-$db = new Database('sqlite', ['file' => 'posts.sqlite']);
+$db = new Database(
+    [
+        'type' => 'sqlite',
+        'file' => 'posts.sqlite'
+    ]
+);
 ```
 
 ## Connect to a Database Engine
@@ -35,21 +39,28 @@ __returns__:
 __example__:
 ```php
 <?php
-$db = new Database('sqlite');
-$db->connect(['file' => 'posts.sqlite']);
+# a database object is created, but it needs to be connected to a database
+# before querring
+$db = new Database();
 
 # for sql
 $connection = [
+    'type' => 'sqlite',
     'file' => 'storage_path/users.sqlite',
 ];
 
 # for mysql
 $connection = [
+    'type'     => 'mysql',
     'host'     => 'localhost',
     'user'     => 'root',
     'password' => 'toor',
     'db_name'  => 'test',
 ];
+
+$db->connect($connection);
+
+# Note: the definition of 'type' in connection is obligatory.
 ```
 
 ## Actions passed to database engine

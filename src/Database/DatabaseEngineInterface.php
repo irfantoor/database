@@ -1,11 +1,11 @@
 <?php
+
 /**
  * IrfanTOOR\Database\DatabaseEngineInterface
  * php version 7.3
  *
- * @package   IrfanTOOR\Database
  * @author    Irfan TOOR <email@irfantoor.com>
- * @copyright 2020 Irfan TOOR
+ * @copyright 2021 Irfan TOOR
  */
 
 namespace IrfanTOOR\Database;

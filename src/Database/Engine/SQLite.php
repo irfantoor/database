@@ -1,11 +1,11 @@
 <?php
+
 /**
  * IrfanTOOR\Database\Engine\SQLite
  * php version 7.3
  *
- * @package   IrfanTOOR\Database
  * @author    Irfan TOOR <email@irfantoor.com>
- * @copyright 2020 Irfan TOOR
+ * @copyright 2021 Irfan TOOR
  */
 
 namespace IrfanTOOR\Database\Engine;
@@ -35,10 +35,11 @@ class SQLite extends AbstractDatabaseEngine implements DatabaseEngineInterface
     function connect($connection = []): bool
     {
         $this->db = null;
+        $file = $connection['file'] ?? null;
 
-        $file = '';
-
-        extract($connection);
+        if (!$file) {
+            throw new Exception("connection does not include the file definition");
+        }
 
         if (!file_exists($file)) {
             throw new Exception("sqlite file: $file, does not exist");

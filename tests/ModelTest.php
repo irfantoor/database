@@ -1,12 +1,4 @@
 <?php
-/**
- * ModelTest
- * php version 7.3
- *
- * @package   IrfanTOOR\Database
- * @author    Irfan TOOR <email@irfantoor.com>
- * @copyright 2020 Irfan TOOR
- */
 
 use IrfanTOOR\Database\{
     Model,
@@ -21,7 +13,7 @@ class ModelTest extends Test
     {
         $file = $this->getFile();
 
-        // unlink the existing file
+        # unlink the existing file
         if (file_exists($file)) {
             unlink($file);
         }
@@ -50,19 +42,19 @@ class ModelTest extends Test
     {
         $file = $this->getFile();
 
-        // table name is provided
+        # table name is provided
         $users = new Users(['file' => $file, 'table' => 'users_table']);
         $this->assertEquals('users_table', $users->getVar('table'));
 
-        // table deos not exist
+        # table deos not exist
         $this->assertException(
             function () use ($users) {
                 $users->get();
             }
         );
 
-        // table name is not provided
-        // Model class is 'Users' => table name is strtolower of (classname)
+        # table name is not provided
+        # Model class is 'Users' => table name is strtolower of (classname)
         $users = new Users(['file' => $file]);
         $this->assertEquals('users', $users->getVar('table'));
         $this->assertArray($users->get());
@@ -106,43 +98,44 @@ class ModelTest extends Test
         }
     }
 
-    public function testModelDeploySchema()
+    /**
+     * throws: Exception::class
+     * message: SQLSTATE[HY000]: General error: 1 no such table: users
+     */
+    public function testModelDeployNoTableException()
     {
         $users = $this->getUsers();
         
-        // There is no table
-        $this->assertException(
-            function () use ($users) {
-                $r = $users->get();
-            },
-            Exception::class,
-            "SQLSTATE[HY000]: General error: 1 no such table: users"
-        );
+        # There is no table
+        $r = $users->get();
+    }
 
-        // Deploy the schema
+    /**
+     * throws: Exception::class
+     * message: SQLSTATE[HY000]: General error: 1 index users_name_index already exists
+     */
+    public function testModelReDeployException()
+    {
+        $users = $this->getUsers();
+
+        # Deploy the schema
         $schema = $users->prepareSchema();
         $users->deploySchema($schema);
 
-        // try getting now
+        # try getting now
         $r = $users->get();
         $this->assertArray($r);
         $this->assertEquals([], $r);
 
-        // try deploying on a database on which we have already deplyed the schema
-        $this->assertException(
-            function () use ($users, $schema) {
-                $users->deploySchema($schema);
-            },
-            Exception::class,
-            "SQLSTATE[HY000]: General error: 1 index users_name_index already exists"
-        );
+        # try deploying on a database on which we have already deployed the schema
+        $users->deploySchema($schema);
     }
 
     public function testModelHas()
     {
         $users = $this->getUsers();
 
-        // no data has been inserted so far!
+        # no data has been inserted so far!
         $this->assertFalse(
             $users->has(
                 [
@@ -152,7 +145,7 @@ class ModelTest extends Test
             )
         );
 
-        // No record in the database
+        # No record in the database
         $this->assertFalse($users->has());
 
         $users->insert(
@@ -172,7 +165,7 @@ class ModelTest extends Test
             )
         );
 
-        // database has records!
+        # database has records!
         $this->assertTrue($users->has());
     }
 
@@ -180,7 +173,7 @@ class ModelTest extends Test
     {
         $users = $this->getUsers();
 
-        // insert user
+        # insert user
         $users->insert(
             [
                 'name' => 'user-2',
@@ -189,7 +182,7 @@ class ModelTest extends Test
             ]
         );
 
-        // insert another user
+        # insert another user
         $users->insert(
             [
                 'name' => 'user-3',
@@ -198,7 +191,7 @@ class ModelTest extends Test
             ]
         );
 
-        // assert that the user exists now
+        # assert that the user exists now
         $this->assertTrue(
             $users->has(
                 [
@@ -225,10 +218,10 @@ class ModelTest extends Test
     {
         $users = $this->getUsers();
 
-        // get the list of users
+        # get the list of users
         $list = $users->get();
 
-        // assert if count and the users name are as expected
+        # assert if count and the users name are as expected
         $this->assertEquals(3, count($list));
         $this->assertEquals('user-1', $list[0]['name']);
         $this->assertEquals('user-2', $list[1]['name']);
@@ -239,7 +232,7 @@ class ModelTest extends Test
     {
         $users = $this->getUsers();
 
-        // user with id 3 does not exist
+        # user with id 3 does not exist
         $user = $users->getFirst(
             [
             'where' => 'id = :id',
@@ -247,13 +240,13 @@ class ModelTest extends Test
             ]
         );
 
-        // assert no user exists!
+        # assert no user exists!
         $this->assertNull($user);
 
-        // get the first user in reverse order
+        # get the first user in reverse order
         $user = $users->getFirst(['order_by' => 'id desc']);
 
-        // assert that we have a user and assert his expected name
+        # assert that we have a user and assert his expected name
         $this->assertNotNull($user);
         $this->assertEquals('user-3', $user['name']);
     }
@@ -263,23 +256,23 @@ class ModelTest extends Test
     {
         $users = $this->getUsers();
 
-        // id 1 exists
+        # id 1 exists
         $this->assertTrue($users->has(['where' => 'id = 1']));
 
-        // get this record
+        # get this record
         $user = $users->getFirst(['where' => 'id = 1']);
 
-        // assert expected values
+        # assert expected values
         $this->assertEquals('user-1',   $user['name']);
         $this->assertEquals('email1',   $user['email']);
         $this->assertEquals('password', $user['password']);
 
-        // update password
+        # update password
         $users->update(
             [
                 'id' => 4,
                 'password' => 'updated password'
-            ], // record
+            ], # record
             [
                 'where' => 'id = :id',
                 'bind'  => [
@@ -294,10 +287,10 @@ class ModelTest extends Test
         $this->assertEquals('email1', $user['email']);
         $this->assertEquals('updated password', $user['password']);
 
-        // get the record
+        # get the record
         $user = $users->getFirst(['where' => 'id = 4']);
 
-        // assert expected values
+        # assert expected values
         $this->assertEquals('user-1', $user['name']);
         $this->assertEquals('email1', $user['email']);
         $this->assertEquals('updated password', $user['password']);
@@ -307,12 +300,12 @@ class ModelTest extends Test
     {
         $users = $this->getUsers();
 
-        // id 1 does not exists, updated in a previous test
+        # id 1 does not exists, updated in a previous test
         $this->assertFalse(
             $users->has(['where' => 'id = 1'])
         );
 
-        // it will do an insert as id 1 does not exists
+        # it will do an insert as id 1 does not exists
         $result = $users->insertOrUpdate(
             [
                 'id'       => 1,
@@ -324,19 +317,19 @@ class ModelTest extends Test
 
         $this->assertTrue($result);
         
-        // id 1 is inserted as it exists now
+        # id 1 is inserted as it exists now
         $this->assertTrue(
             $users->has(['where' => 'id = 1'])
         );
 
-        // assert the expected values
+        # assert the expected values
         $user = $users->getFirst(['where' => "id = '1'"]);
 
         $this->assertEquals('inserted user', $user['name']);
         $this->assertEquals('inserted email', $user['email']);
         $this->assertEquals('inserted password', $user['password']);
 
-        // it will update as id 1 already exists
+        # it will update as id 1 already exists
         $result = $users->insertOrUpdate(
             [
                 'id'       => 1,
@@ -348,7 +341,7 @@ class ModelTest extends Test
 
         $this->assertTrue($result);
 
-        // assert the expected values
+        # assert the expected values
         $user = $users->getFirst(['where' => 'id = 1']);
 
         $this->assertEquals('updated user',     $user['name']);

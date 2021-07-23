@@ -3,6 +3,12 @@
 Create models and/or access your databases with ease and least overhead.
 A bare-minimum and simple database access.
 
+## Installation
+
+```sh
+$ composer require irfantoor/database
+```
+
 ## Creating a Database object
 
 __method__: new Database(?array $connection = null)

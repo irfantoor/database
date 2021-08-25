@@ -8,7 +8,7 @@
  * @copyright 2021 Irfan TOOR
  */
 
-namespace IrfanTOOR\Database;
+namespace IrfanTOOR\Database\Engine;
 
 /**
  * Defines the DatabaseEngineInterface
@@ -17,7 +17,7 @@ Interface DatabaseEngineInterface
 {
     /**
      * Connect to a database
-     * 
+     *
      * @param array $connection Associative array of connection parameters
      *
      * @return bool
@@ -26,7 +26,7 @@ Interface DatabaseEngineInterface
 
     /**
      * Executes a raw SQL
-     * 
+     *
      * @param string $sql  Raw SQL, might contain :placeholders
      * @param array  $bind Associative array to bind data in sql while preparing
      *                     see DatabaseEngineInterface::update
@@ -37,7 +37,7 @@ Interface DatabaseEngineInterface
 
     /**
      * Inserts a record into a connected database
-     * 
+     *
      * @param string $table  Table name
      * @param array  $record Associative array of record, values might contain
      *                       variables of the form :id etc, which are filled
@@ -45,17 +45,17 @@ Interface DatabaseEngineInterface
      *                       bind array e.g. ['id' => :id, 'name' => :name ]
      *                       Note: record must contain all of the required
      *                       fields
-     * @param array  $bind   Associative array e.g. ['id' => $_GET['id'] ?? 1], 
+     * @param array  $bind   Associative array e.g. ['id' => $_GET['id'] ?? 1],
      *                       see DatabaseEngineInterface::update for bind
      *                       details
-     * 
+     *
      * @return bool Result of the insert operation
      */
     public function insert(string $table, array $record, array $bind = []);
 
     /**
      * Updates an existing record
-     * 
+     *
      * @param string $table   Table name
      * @param array  $record  Associative array only includes data to be updated
      * @param array  $options Contains where, limit or bind etc.
@@ -66,7 +66,7 @@ Interface DatabaseEngineInterface
 
     /**
      * Removes a record from database
-     * 
+     *
      * @param string $table   Table name
      * @param array  $options Contains where, limit or bind options
      *
@@ -76,11 +76,11 @@ Interface DatabaseEngineInterface
 
     /**
      * Retreives list of records
-     * 
+     *
      * @param string $table   Table name
      * @param array  $options Associative array containing where, order_by, limit and
      *                        bind if limit is an int, the records are retrived from
-     *                        start, if its an array it is interpretted like 
+     *                        start, if its an array it is interpretted like
      *                        [int $from, int $count], $from indicates number of
      *                        records to skip and $count indicates number of records
      *                        to retrieve.
@@ -91,11 +91,11 @@ Interface DatabaseEngineInterface
 
     /**
      * Retreives only the first record
-     * 
+     *
      * @param string $table   Table name
      * @param array  $options Options
-     * 
-     * @return array  containing the associative key=>value pairs of the row 
+     *
+     * @return array  containing the associative key=>value pairs of the row
      *                or null otherwise
      */
     public function getFirst(string $table, array $options = []);

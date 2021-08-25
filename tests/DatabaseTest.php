@@ -2,11 +2,11 @@
 
 use IrfanTOOR\Test;
 use IrfanTOOR\Database;
-use IrfanTOOR\Database\{
+use IrfanTOOR\Database\Engine\{
     DatabaseEngineInterface,
     AbstractDatabaseEngine,
-    Engine\SQLite,
-    Engine\MySQL
+    SQLite,
+    MySQL
 };
 use Tests\Users;
 
@@ -162,7 +162,7 @@ class DatabaseTest extends Test
         # no data has been inserted so far!
         $this->assertFalse(
             $db->has(
-                'users', 
+                'users',
                 [
                     'where' => 'id =:id',
                     'bind'  => ['id' => 1],
@@ -174,7 +174,7 @@ class DatabaseTest extends Test
         $this->assertFalse($db->has('users'));
 
         $db->insert(
-            'users', 
+            'users',
             [
                 'name' => 'user-1',
                 'email' => 'email1',
@@ -184,7 +184,7 @@ class DatabaseTest extends Test
 
         $this->assertTrue(
             $db->has(
-                'users', 
+                'users',
                 [
                     'where' => 'email = :email',
                     'bind'  => ['email' => 'email1']
@@ -223,7 +223,7 @@ class DatabaseTest extends Test
         # assert that the user exists now
         $this->assertTrue(
             $db->has(
-                'users', 
+                'users',
                 [
                     'where' => 'name = :name',
                     'bind'  => ['name' => 'user-1']
@@ -340,7 +340,7 @@ class DatabaseTest extends Test
 
         # it will do an insert as id 1 does not exists
         $result = $db->insertOrUpdate(
-            'users', 
+            'users',
             [
                 'id'       => 1,
                 'name'     => 'inserted user',
@@ -350,7 +350,7 @@ class DatabaseTest extends Test
         );
 
         $this->assertTrue($result);
-        
+
         # id 1 is inserted as it exists now
         $this->assertTrue(
             $db->has('users', ['where' => 'id = 1'])

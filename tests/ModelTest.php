@@ -105,7 +105,7 @@ class ModelTest extends Test
     public function testModelDeployNoTableException()
     {
         $users = $this->getUsers();
-        
+
         # There is no table
         $r = $users->get();
     }
@@ -316,7 +316,7 @@ class ModelTest extends Test
         );
 
         $this->assertTrue($result);
-        
+
         # id 1 is inserted as it exists now
         $this->assertTrue(
             $users->has(['where' => 'id = 1'])

@@ -11,7 +11,7 @@
 namespace IrfanTOOR\Database\Engine;
 
 use Exception;
-use IrfanTOOR\Database\{
+use IrfanTOOR\Database\Engine\{
     AbstractDatabaseEngine,
     DatabaseEngineInterface
 };
@@ -24,7 +24,7 @@ class SQLite extends AbstractDatabaseEngine implements DatabaseEngineInterface
 {
     /**
      * Connect to a database
-     * 
+     *
      * @param array $connection Associative array giving connection parameters
      *              e.g. $connection = [
      *                  'file'     => $db_storage_path . 'users.sqlite',
@@ -57,7 +57,7 @@ class SQLite extends AbstractDatabaseEngine implements DatabaseEngineInterface
 
     /**
      * Insert a record into a connected database, or or updates an existing record
-     * 
+     *
      * @param string $table  Table name
      * @param array  $record associative array of record, values might contain
      *                       variables of the form :id etc, which are filled
@@ -65,10 +65,10 @@ class SQLite extends AbstractDatabaseEngine implements DatabaseEngineInterface
      *                       bind array e.g. ['id' => :id, 'name' => :name ]
      *                       Note: record must contain all of the required
      *                       fields
-     * @param array  $bind   associative array e.g. ['id' => $_GET['id'] ?? 1], 
+     * @param array  $bind   associative array e.g. ['id' => $_GET['id'] ?? 1],
      *                       see DatabaseEngineInterface::update for bind
      *                       details
-     * 
+     *
      * @return bool result of the insert/update operation
      */
     public function insertOrUpdate(string $table, array $record, array $bind = [])
@@ -87,7 +87,7 @@ class SQLite extends AbstractDatabaseEngine implements DatabaseEngineInterface
             } else {
                 $sql .= $sep . ':' . $k;
             }
-            
+
             $sep = ', ';
         }
 

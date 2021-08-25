@@ -20,6 +20,7 @@
     },
     "autoload": {
         "psr-4": {
+            "IrfanTOOR\\Database\\": "src/",
             "IrfanTOOR\\": "src/",
             "Tests\\": "tests/classes/"
         }

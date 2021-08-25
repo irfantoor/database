@@ -11,7 +11,7 @@
 namespace IrfanTOOR\Database\Engine;
 
 use Exception;
-use IrfanTOOR\Database\{
+use IrfanTOOR\Database\Engine\{
     AbstractDatabaseEngine,
     DatabaseEngineInterface
 };
@@ -24,7 +24,7 @@ class MySQL extends AbstractDatabaseEngine implements DatabaseEngineInterface
 {
     /**
      * Connect to a database
-     * 
+     *
      * @param array $connection Associative array giving connection parameters
      *              e.g. $connection = [
      *                  'host'     => '127.0.0.1',
@@ -38,7 +38,7 @@ class MySQL extends AbstractDatabaseEngine implements DatabaseEngineInterface
     function connect($connection = []): bool
     {
         $this->db = null;
-        
+
         $host     = '127.0.0.1';
         $user     = '';
         $password = '';

@@ -1,14 +1,14 @@
 <?php
 
 /**
- * IrfanTOOR\Database\AbstractDatabaseEngine
+ * IrfanTOOR\Database\Engine\AbstractDatabaseEngine
  * php version 7.3
  *
  * @author    Irfan TOOR <email@irfantoor.com>
  * @copyright 2021 Irfan TOOR
  */
 
-namespace IrfanTOOR\Database;
+namespace IrfanTOOR\Database\Engine;
 
 use Exception;
 use PDOException;
@@ -35,13 +35,13 @@ abstract class AbstractDatabaseEngine
 
     /**
      * Construct Engine
-     * 
+     *
      * @param array $connection Associative array giving connection parameters
      */
     public function __construct(array $connection)
     {
         $this->connect($connection);
-    }    
+    }
 
     /**
      * @inheritdoc
@@ -57,7 +57,7 @@ abstract class AbstractDatabaseEngine
         foreach ($bind as $k => $v) {
             $$k = $v;
             // todo -- bindParam( ... , PDO::PARAM_INT ...);
-            $q->bindParam(':' . $k, $$k); 
+            $q->bindParam(':' . $k, $$k);
         }
 
         $result = $q->execute();
@@ -94,7 +94,7 @@ abstract class AbstractDatabaseEngine
             } else {
                 $sql .= $sep . ':' . $k;
             }
-            
+
             $sep = ', ';
         }
 
@@ -127,10 +127,10 @@ abstract class AbstractDatabaseEngine
             } else {
                 $sql .= $sep . "$k = :$k";
             }
-            
+
             $sep = ', ';
         }
-        
+
         $sql .= ' WHERE ' . $where; // ' LIMIT ' . $limit;
 
         foreach ($record as $k => $v) {
@@ -202,5 +202,5 @@ abstract class AbstractDatabaseEngine
     {
         $r = $this->getFirst($table, $options);
         return $r ? true : false;
-    }    
+    }
 }

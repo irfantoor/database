@@ -11,7 +11,7 @@
 namespace IrfanTOOR;
 
 use Exception;
-use IrfanTOOR\Database\DatabaseEngineInterface;
+use IrfanTOOR\Database\Engine\DatabaseEngineInterface;
 
 /**
  * Irfan's Database, A bare-minimum and simple database access.

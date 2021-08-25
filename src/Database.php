@@ -26,7 +26,7 @@ use IrfanTOOR\Database\DatabaseEngineInterface;
  *   $db->insert('users', $user);
  *   $user['email'] = 'new@example.com'
  *   $db->update('users', $user, [
- *      'where' => 'name = :name', 
+ *      'where' => 'name = :name',
  *      'bind' => ['name' => $name]
  *   ]);
  *   $db->remove('users', ['where' => 'name = :name', 'bind' => ['name' => $name]]);
@@ -44,7 +44,7 @@ class Database
 {
     const NAME        = "Irfan's Database";
     const DESCRIPTION = "A bare-minimum and simple database connectivity";
-    const VERSION     = "0.4";
+    const VERSION     = "0.5";
 
     /**
      * @var DatabaseEngineInterface;
@@ -61,7 +61,7 @@ class Database
         'mysql'  => '\IrfanTOOR\Database\Engine\MySQL',
         'sqlite' => '\IrfanTOOR\Database\Engine\SQLite',
     ];
-    
+
     /**
      * Database constructor
      *
@@ -79,7 +79,7 @@ class Database
      * Connect to a Database Engine
      *
      * @param array $connection - Associative array of connection parameters
-     * 
+     *
      * @return bool Result indicates if the connect operation was successful
      */
     public function connect(array $connection): bool
@@ -97,7 +97,7 @@ class Database
 
     /**
      * Returns the current Database Engine
-     * 
+     *
      * @return DatabaseEngineInterface | null
      */
     public function getDatabaseEngine()
@@ -107,10 +107,10 @@ class Database
 
     /**
      * Passes all of the calls to Database Engine
-     * 
+     *
      * @param string $method Method
      * @param array  $args   Arguments to be passed
-     * 
+     *
      * @return mixed
      */
     public function __call(string $method, array $args)

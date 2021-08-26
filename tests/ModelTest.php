@@ -244,7 +244,7 @@ class ModelTest extends Test
         $this->assertNull($user);
 
         # get the first user in reverse order
-        $user = $users->getFirst(['order_by' => 'id desc']);
+        $user = $users->getFirst(['orderby' => 'id desc']);
 
         # assert that we have a user and assert his expected name
         $this->assertNotNull($user);

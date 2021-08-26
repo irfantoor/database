@@ -10,6 +10,8 @@
 
 namespace IrfanTOOR\Database\Engine;
 
+use IrfanTOOR\Database\Query;
+
 /**
  * Defines the DatabaseEngineInterface
  */
@@ -36,6 +38,14 @@ Interface DatabaseEngineInterface
     public function query(string $sql, array $bind = []);
 
     /**
+     * Executes the given query or executes the internal query
+     *
+     * @param Query|null $query Query Object
+     * @result mixed
+     */
+    public function execute(?Query $query = null);
+
+    /**
      * Inserts a record into a connected database
      *
      * @param string $table  Table name
@@ -45,13 +55,10 @@ Interface DatabaseEngineInterface
      *                       bind array e.g. ['id' => :id, 'name' => :name ]
      *                       Note: record must contain all of the required
      *                       fields
-     * @param array  $bind   Associative array e.g. ['id' => $_GET['id'] ?? 1],
-     *                       see DatabaseEngineInterface::update for bind
-     *                       details
      *
      * @return bool Result of the insert operation
      */
-    public function insert(string $table, array $record, array $bind = []);
+    public function insert(string $table, array $record);
 
     /**
      * Updates an existing record

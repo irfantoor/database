@@ -16,7 +16,7 @@ use IrfanTOOR\Database\Engine\DatabaseEngineInterface;
 /**
  * Irfan's Database, A bare-minimum and simple database access.
  *
- * You can connect the Database engines like MySAL, SQLite, MSSQL, Couchbase ...
+ * You can connect the Database engines like MySQL, SQLite, MSSQL, Couchbase ...
  *
  * e.g.
  *   $db = new Database('sqlite', ['file' => 'posts.sqlite']);

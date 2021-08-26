@@ -1,7 +1,7 @@
 <?php
 
 /**
- * IrfanTOOR\Database\Engine\MyQL;
+ * IrfanTOOR\Database\Engine\MySQL;
  * php version 7.3
  *
  * @author    Irfan TOOR <email@irfantoor.com>

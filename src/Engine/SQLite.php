@@ -71,34 +71,14 @@ class SQLite extends AbstractDatabaseEngine implements DatabaseEngineInterface
      *
      * @return bool result of the insert/update operation
      */
-    public function insertOrUpdate(string $table, array $record, array $bind = [])
+    public function insertOrUpdate(string $table, array $record)
     {
-        extract(self::$defaults, EXTR_SKIP);
+        $this->query
+            ->init()
+            ->insertOrUpdate($record)
+            ->into($table)
+        ;
 
-        $sql =  'INSERT OR REPLACE INTO ' . $table . ' ' .
-               '(' . implode(', ', array_keys($record)) . ') VALUES (';
-
-        $sep = '';
-
-        foreach ($record as $k => $v) {
-            if (isset($bind[$k])) {
-                $sql .= $sep . ':__' . $k;
-                $bind['__' . $k] = $v;
-            } else {
-                $sql .= $sep . ':' . $k;
-            }
-
-            $sep = ', ';
-        }
-
-        $sql .= ');';
-
-        foreach ($record as $k => $v) {
-            if (!isset($bind[$k])) {
-                $bind[$k] = $v;
-            }
-        }
-
-        return $this->query($sql, $bind);
+        return $this->execute();
     }
 }

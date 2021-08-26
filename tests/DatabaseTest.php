@@ -276,7 +276,7 @@ class DatabaseTest extends Test
         $this->assertNull($user);
 
         # get the first user in reverse order
-        $user = $db->getFirst('users', ['order_by' => 'id desc']);
+        $user = $db->getFirst('users', ['orderby' => 'id desc']);
 
         # assert that we have a user and assert his expected name
         $this->assertNotNull($user);

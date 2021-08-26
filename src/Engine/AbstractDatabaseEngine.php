@@ -11,6 +11,7 @@
 namespace IrfanTOOR\Database\Engine;
 
 use Exception;
+use IrfanTOOR\Database\Query;
 use PDOException;
 
 abstract class AbstractDatabaseEngine
@@ -19,6 +20,11 @@ abstract class AbstractDatabaseEngine
      * @var DatabaseEngineInterface
      */
     protected $db;
+
+    /**
+     * @var Query
+     */
+    protected $query;
 
     /**
      * @var array
@@ -38,9 +44,12 @@ abstract class AbstractDatabaseEngine
      *
      * @param array $connection Associative array giving connection parameters
      */
-    public function __construct(array $connection)
+    public function __construct(?array $connection = null)
     {
-        $this->connect($connection);
+        if ($connection)
+            $this->connect($connection);
+
+        $this->query = new Query();
     }
 
     /**
@@ -78,35 +87,29 @@ abstract class AbstractDatabaseEngine
     /**
      * @inheritdoc
      */
-    public function insert(string $table, array $record, array $bind = [])
+    public function execute(?Query $query = null)
     {
-        extract(self::$defaults, EXTR_SKIP);
+        if ($query)
+            $this->query = $query;
 
-        $sql = 'INSERT INTO ' . $table . ' ' .
-               '(' . implode(', ', array_keys($record)) . ') VALUES (';
-
-        $sep = '';
-
-        foreach ($record as $k => $v) {
-            if (isset($bind[$k])) {
-                $sql .= $sep . ':__' . $k;
-                $bind['__' . $k] = $v;
-            } else {
-                $sql .= $sep . ':' . $k;
-            }
-
-            $sep = ', ';
-        }
-
-        $sql .= ');';
-
-        foreach ($record as $k => $v) {
-            if (!isset($bind[$k])) {
-                $bind[$k] = $v;
-            }
-        }
+        $sql  = $this->query->__toString();
+        $bind = $this->query->get('bind');
 
         return $this->query($sql, $bind);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function insert(string $table, array $record)
+    {
+        $this->query
+            ->init()
+            ->insert($record)
+            ->into($table)
+        ;
+
+        return $this->execute();
     }
 
     /**
@@ -114,32 +117,14 @@ abstract class AbstractDatabaseEngine
      */
     public function update(string $table, array $record, array $options = [])
     {
-        extract(self::$defaults, EXTR_SKIP);
-        extract($options);
+        $this->query
+            ->init()
+            ->update($record)
+            ->into($table)
+            ->options($options)
+        ;
 
-        $sql = 'UPDATE ' . $table . ' SET ';
-        $sep = '';
-
-        foreach ($record as $k => $v) {
-            if (isset($bind[$k])) {
-                $sql .= $sep . "$k = :__$k";
-                $bind['__' . $k] = $v;
-            } else {
-                $sql .= $sep . "$k = :$k";
-            }
-
-            $sep = ', ';
-        }
-
-        $sql .= ' WHERE ' . $where; // ' LIMIT ' . $limit;
-
-        foreach ($record as $k => $v) {
-            if (!isset($bind[$k])) {
-                $bind[$k] = $v;
-            }
-        }
-
-        return $this->query($sql, $bind);
+        return $this->execute();
     }
 
     /**
@@ -147,18 +132,14 @@ abstract class AbstractDatabaseEngine
      */
     public function remove(string $table, array $options)
     {
-        extract(self::$defaults, EXTR_SKIP);
-        unset($where);
-        extract($options);
+        $this->query
+            ->init()
+            ->delete()
+            ->from($table)
+            ->options($options)
+        ;
 
-        if (!$where) {
-            throw new Exception("where condition is required", 1);
-        }
-
-        $sql =  'DELETE FROM ' . $table;
-        $sql .= ' WHERE ' . $where; // ' LIMIT '    . $limit;
-
-        return $this->query($sql, $bind);
+        return $this->execute();
     }
 
     /**
@@ -166,22 +147,14 @@ abstract class AbstractDatabaseEngine
      */
     public function get(string $table, array $options = [])
     {
-        extract(self::$defaults, EXTR_SKIP);
-        $limit = [0, 100];
-        extract($options);
+        $this->query
+            ->init()
+            ->select('*')
+            ->from($table)
+            ->options($options)
+        ;
 
-        if (is_array($limit)) {
-            $offset = $limit[0];
-            $limit = $limit[1];
-        }
-
-        $sql = 'SELECT ' . $select .
-            ' FROM '  . $table .
-            ' WHERE ' . $where .
-            ($order_by !== '' ? ' ORDER BY ' . $order_by : '') .
-            ' LIMIT ' . $offset . ',' . $limit;
-
-        return $this->query($sql, $bind);
+        return $this->execute();
     }
 
     /**

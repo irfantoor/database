@@ -40,10 +40,14 @@ class Query
     /** @var array Components of the Query */
     protected $sql;
 
-    /** Query constructor */
-    public function __construct()
+    /**
+     * Query constructor
+     *
+     * @param array $init Optional associative array ot initialize the query
+     */
+    public function __construct(array $init = [])
     {
-        $this->init();
+        $this->init($init);
     }
 
     /** Used for the aliases of the method 'from' */
@@ -91,9 +95,12 @@ class Query
      * Retrieves the value of a query component
      *
      * @param string $component
-     **/
+     */
     public function get(string $component)
     {
+        if (in_array($component , ['from', 'table', 'into', 'in']))
+            return $this->sql['table'] ?? null;
+
         return $this->sql[$component] ?? null;
     }
 
@@ -106,7 +113,10 @@ class Query
     public function options(array $data): self
     {
         foreach ($data as $k => $v) {
-            $this->$k($v);
+            try {
+                $this->$k($v);
+            } catch(\Throwable $th)
+            {}
         }
 
         return $this;
@@ -173,10 +183,9 @@ class Query
         $this->sql['where'] =
             (
                 $this->sql['where']
-                ? ($this->sql['where']) . " $operator "
-                : ""
-            ) .
-            $condition
+                ? "(" . $this->sql['where'] . " $operator " . $condition . ")"
+                : $condition
+            )
         ;
         return $this;
     }
@@ -376,8 +385,6 @@ class Query
             'UPDATE ' . $this->sql['table'] .
             ' SET ' .
                 $this->prepareIndividualValues() .
-                # id = :record_id,
-                // implode(', ', array_keys($this->sql['record'])) .
             ' WHERE ' . $this->sql['where']
         ;
     }
@@ -387,13 +394,10 @@ class Query
      */
     protected function deleteQuery(): string
     {
-        if (!$this->sql['where'])
-            throw new Exception("WHERE condition is necessary for DELETE Query");
-
         return
             'DELETE' .
             ' FROM '  . $this->sql['table'] .
-            ' WHERE ' . $this->sql['where'] .
+            ' WHERE ' . ($this->sql['where'] ?? '0=1') .
             // ' LIMIT ' . ($this->sql['limit'] ?? self::DEFAULT_DELETE_LIMIT) .
             ';'
         ;

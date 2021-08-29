@@ -99,7 +99,7 @@ class Model
     function __construct(array $connection = [])
     {
         $this->file = $connection['file'] ?? null;
-        
+
         $deploy_schema = false;
         $create = $connection['create'] ?? false;
 
@@ -118,7 +118,7 @@ class Model
 
         $table = $connection['table'] ?? null;
 
-        // convert modelname to tablename e.g. Users::class will create the 
+        // convert modelname to tablename e.g. Users::class will create the
         // table 'users'
         if (!$table) {
             $class = explode('\\', get_called_class());
@@ -154,7 +154,7 @@ class Model
      * Prepares the schema
      *
      * @return string Raw SQL schema, prepared from the definition of schema and
-     *                indices, which were provided while wrinting the model 
+     *                indices, which were provided while wrinting the model
      *                (ref: Creating a Model), is returned. This schema can be used
      *                to create the sqlite file manually.
      */
@@ -239,9 +239,9 @@ class Model
      *
      * @return bool Result of the operation
      */
-    public function insert(array $record, array $bind = []): bool
+    public function insert(array $record): bool
     {
-        return $this->db->insert($this->table, $record, $bind);
+        return $this->db->insert($this->table, $record);
     }
 
     /**
@@ -250,11 +250,11 @@ class Model
      * @param array $record Associative array represnting one record
      * @param array $bind   The data to bind to the :placeholders in $record
      *
-     * @return bool Result of the operation 
+     * @return bool Result of the operation
      */
-    public function insertOrUpdate(array $record, array $bind = []): bool
+    public function insertOrUpdate(array $record): bool
     {
-        return $this->db->insertOrUpdate($this->table, $record, $bind);
+        return $this->db->insertOrUpdate($this->table, $record);
     }
 
     /**
@@ -317,7 +317,6 @@ class Model
      */
     public function has($options = []): bool
     {
-        $r = $this->getFirst($options);
-        return $r ? true : false;
+        return $this->db->has($this->table, $options);
     }
 }

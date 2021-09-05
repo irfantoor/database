@@ -18,7 +18,7 @@ use Exception;
  *      ->where('dob < :dob')
  *      ->orderby('name)
  *      ->limt(10)
- *      ->bind('name' => 'a%', 'dob' => '2002-01-01')
+ *      ->bind(['name' => 'a%', 'dob' => '2002-01-01'])
  *      ; # note order of the bove functions is not important
  * echo $q will print:
  * SELECT * FROM users WHERE name like :name AND dob < :dob ORDER BY name limit 10;

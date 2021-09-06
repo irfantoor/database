@@ -98,15 +98,16 @@ class Model
      */
     function __construct(array $connection = [])
     {
-        $this->file = $connection['file'] ?? null;
+        if (!array_key_exists('file', $connection))
+            throw new Exception("file is missing in the connection");
+
+        $this->file = $connection['file'];
 
         $deploy_schema = false;
         $create = $connection['create'] ?? false;
 
-        if (!$this->file) {
-            throw new Exception("file key is missing in the connection");
-        } elseif (!is_string($this->file)) {
-            throw new Exception("file key in the connection must be a string");
+        if (!is_string($this->file)) {
+            throw new Exception("file must be a string");
         } elseif (!file_exists($this->file)) {
             if ($create) {
                 file_put_contents($this->file, '');
@@ -134,10 +135,80 @@ class Model
         }
 
         // deploy the schema if its a newly created file
-        if ($deploy_schema) {
-            $schema = $this->prepareSchema();
-            $this->deploySchema($schema);
+        if ($deploy_schema)
+            $this->deploySchema();
+    }
+
+    /**
+     * Adds a field to the schema
+     *
+     * @param string $fld
+     * @param string $def
+     */
+    function addField(string $fld, string $def = '')
+    {
+        $this->schema[$fld] = $def;
+    }
+
+    /**
+     * Adds a field to the schema
+     *
+     * @param string $fld
+     * @param string $def
+     *
+     * @return bool True if successful, false if not present or on failure
+     */
+    function removeField(string $fld): bool
+    {
+        if (!array_key_exists($fld, $this->schema))
+            return false;
+
+        unset($this->schema[$fld]);
+        $this->removeIndex($fld);
+        return true;
+    }
+
+    /**
+     * Adds an index
+     *
+     * @param string $fld
+     * @param bool   $unique
+     */
+    function addIndex(string $fld, bool $unique = false)
+    {
+        $indices = [];
+
+        foreach ($this->indices as $index) {
+            foreach ($index as $type => $field) {
+                if ($fld === $field)
+                    continue;
+                $indices[] = [$type => $field];
+            }
         }
+
+        $indices[] = [($unique ? "unique" : "index") => $fld];
+        $this->indices = $indices;
+    }
+
+    /**
+     * Removes an index
+     *
+     * @param string $fld
+     * @param bool   $unique
+     */
+    function removeIndex(string $fld)
+    {
+        $indices = [];
+
+        foreach ($this->indices as $index) {
+            foreach ($index as $type => $field) {
+                if ($fld === $field)
+                    continue;
+                $indices[] = [$type => $field];
+            }
+        }
+
+        $this->indices = $indices;
     }
 
     /**
@@ -170,7 +241,7 @@ class Model
                 $def = '';
             }
 
-            $schema .= $sep . $fld . ' ' . $def;
+            $schema .= $sep . $fld . ($def ? ' ' . $def : '');
             $sep = ', ' . PHP_EOL;
         }
 
@@ -178,7 +249,7 @@ class Model
 
         // Add indices
         foreach ($this->indices as $index) {
-            foreach ($index as $type=>$field) {
+            foreach ($index as $type => $field) {
                 $type = strtolower($type);
 
                 switch ($type) {
@@ -210,8 +281,11 @@ class Model
      *
      * @return void
      */
-    public function deploySchema(string $schema)
+    public function deploySchema(?string $schema = null)
     {
+        if (!$schema)
+            $schema = $this->prepareSchema();
+
         try {
             $schema = explode(';', str_replace(PHP_EOL, '', $schema));
 

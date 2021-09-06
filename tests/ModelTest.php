@@ -44,7 +44,7 @@ class ModelTest extends Test
 
         # table name is provided
         $users = new Users(['file' => $file, 'table' => 'users_table']);
-        $this->assertEquals('users_table', $users->getVar('table'));
+        $this->assertEquals('users_table',$this->getProperty($users, 'table'));
 
         # table deos not exist
         $this->assertException(
@@ -56,8 +56,96 @@ class ModelTest extends Test
         # table name is not provided
         # Model class is 'Users' => table name is strtolower of (classname)
         $users = new Users(['file' => $file]);
-        $this->assertEquals('users', $users->getVar('table'));
+        $this->assertEquals('users', $this->getProperty($users, 'table'));
         $this->assertArray($users->get());
+    }
+
+    /**
+     * throws: Exception::class
+     * message: file is missing in the connection
+     */
+    function testModelConstructorExceptionNoFilename()
+    {
+        $u = new Users([]);
+    }
+
+    /**
+     * throws: Exception::class
+     * message: file must be a string
+     */
+    function testModelConstructorExceptionNotString()
+    {
+        $u = new Users(['file' => null]);
+    }
+
+    /**
+     * throws: Exception::class
+     * message: file: hello.sqlite, does not exist
+     */
+    function testModelConstructorExceptionDoesNotExist()
+    {
+        $u = new Users(['file' => "hello.sqlite"]);
+    }
+
+    function testAddField()
+    {
+        $file = $this->getFile();
+        unlink($file);
+        touch($file);
+
+        $u = new Users(['file' => $file]);
+        $u->addField('url', 'TEXT');
+
+        $schema = $this->getProperty($u, 'schema');
+        $this->assertTrue(array_key_exists('url', $schema));
+        $this->assertEquals('TEXT', $schema['url']);
+    }
+
+    function testAddIndex()
+    {
+        $u = $this->getUsers();
+        $indices = $this->getProperty($u, 'indices');
+        $this->assertEquals(2, count($indices));
+
+        $u->addIndex('created_on');  #adds an index
+        $u->addIndex('token', true); #adds a unique index
+
+        $indices = $this->getProperty($u, 'indices');
+        $this->assertEquals(4, count($indices));
+        $this->assertEquals(['index'  => 'created_on'], $indices[2]);
+        $this->assertEquals(['unique' => 'token'], $indices[3]);
+    }
+
+    function testRemoveIndex()
+    {
+        $u = $this->getUsers();
+        $u->removeIndex('name');
+        $u->removeIndex('email');
+        $schema = $this->getProperty($u, 'schema');
+        $indices = $this->getProperty($u, 'indices');
+        $this->assertTrue(array_key_exists('name', $schema));
+        $this->assertTrue(array_key_exists('email', $schema));
+        $this->assertEquals(0, count($indices));
+    }
+
+    function testRemoveField()
+    {
+        $u = $this->getUsers();
+        $schema  = $this->getProperty($u, 'schema');
+        $indices = $this->getProperty($u, 'indices');
+
+        $this->assertTrue(array_key_exists('name', $schema));
+        $this->assertEquals(['index' => 'name'], $indices[0]);
+        $this->assertEquals(2, count($indices));
+
+        # removes the field and the related index
+        $u->removeField('name');
+        $schema  = $this->getProperty($u, 'schema');
+        $indices = $this->getProperty($u, 'indices');
+
+        $this->assertFalse(array_key_exists('name', $schema));
+        $this->assertNotEquals(['index' => 'name'], $indices[0]);
+        $this->assertEquals(1, count($indices));
     }
 
     public function testModelGetFile()
@@ -75,7 +163,7 @@ class ModelTest extends Test
         $users = $this->getUsers();
         $schema = $users->prepareSchema();
 
-        foreach ($users->getVar('schema') as $fld => $def) {
+        foreach ($this->getProperty($users, 'schema') as $fld => $def) {
             if (is_int($fld)) {
                 $fld = $def;
             };
@@ -83,7 +171,7 @@ class ModelTest extends Test
             $this->assertTrue(strpos($schema, $fld) !== true);
         }
 
-        foreach ($users->getVar('indices') as $index) {
+        foreach ($this->getProperty($users, 'indices') as $index) {
             foreach ($index as $type => $fld) {
                 $find = strtoupper($type);
                 if ($find !== 'INDEX') {
@@ -119,8 +207,7 @@ class ModelTest extends Test
         $users = $this->getUsers();
 
         # Deploy the schema
-        $schema = $users->prepareSchema();
-        $users->deploySchema($schema);
+        $users->deploySchema();
 
         # try getting now
         $r = $users->get();
@@ -128,7 +215,7 @@ class ModelTest extends Test
         $this->assertEquals([], $r);
 
         # try deploying on a database on which we have already deployed the schema
-        $users->deploySchema($schema);
+        $users->deploySchema();
     }
 
     public function testModelHas()
